@@ -1,66 +1,25 @@
-## Foundry
+# Yoink
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Yoink is a unique ERC20 token contract deployed on Base Sepolia. It implements a "yoinkable" token concept where only one token exists, and it can be transferred between holders using the `yoink()` function.
 
-Foundry consists of:
+## Contract Details
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **Name:** Yoink by Moai
+- **Symbol:** YOINK
+- **Total Supply:** 1 (non-divisible)
+- **Decimals:** 0
 
-## Documentation
+## Features
 
-https://book.getfoundry.sh/
+- Only one token exists at any time
+- The token can be "yoinked" (transferred) from the current holder to a new holder
+- Implements standard ERC20 functions with modifications to suit the unique token concept
+- Emits a `Yoinked` event when the token changes hands
 
-## Usage
+## Deployment
 
-### Build
+The contract was deployed to Base Sepolia using the following command:
 
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+```bash
+ff create src/Yoink.sol:Yoink --account deployer --rpc-url https://sepolia.base.org --verify --etherscan-api-key=$BASESCAN_API_KEY
 ```
