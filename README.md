@@ -23,3 +23,16 @@ The contract was deployed to Base Sepolia using the following command:
 ```bash
 ff create src/Yoink.sol:Yoink --account deployer --rpc-url https://sepolia.base.org --verify --etherscan-api-key=$BASESCAN_API_KEY
 ```
+
+
+# DollarAuction
+
+DollarAuction is a unique ERC20 token contract deployed on Base Sepolia. It implements a "dollar auction" concept where the token can be minted by anyone by placing a bid higher than the current highest bid. The highest bidder wins the auction and receives the minted token.
+
+## Deployment
+
+```bash
+source .env
+export USDC_ADDRESS=0x8590E1601A5607b45f2934BDa7447dE6Cfe469b2
+forge script script/DeployDollarAuction.s.sol:DeployDollarAuction --rpc-url base_sepolia --broadcast --verify --account deployer -vvvv --etherscan-api-key=$BASESCAN_API_KEY
+```
