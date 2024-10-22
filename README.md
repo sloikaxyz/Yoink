@@ -36,3 +36,11 @@ source .env
 export USDC_ADDRESS=0x8590E1601A5607b45f2934BDa7447dE6Cfe469b2
 forge script script/DeployDollarAuction.s.sol:DeployDollarAuction --rpc-url base_sepolia --broadcast --verify --account deployer -vvvv --etherscan-api-key=$BASESCAN_API_KEY
 ```
+
+Mint $SIMPLE:
+
+```bash
+cast send $USDC_ADDRESS -r base_sepolia "mint(address)()" 0xe5cc6F5bbB3Eee408A1C022D235e6903656f2509  --account deployer
+
+cast send $USDC_ADDRESS "transfer(address,uint256)()" 0xe657738b17792424197AB61F95FfE6d8058663AE 1ether -r base_sepolia --account deployer
+ ```
