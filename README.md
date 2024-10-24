@@ -40,7 +40,9 @@ forge script script/DeployDollarAuction.s.sol:DeployDollarAuction --rpc-url base
 Mint $SIMPLE:
 
 ```bash
-cast send $USDC_ADDRESS -r base_sepolia "mint(address)()" 0xe5cc6F5bbB3Eee408A1C022D235e6903656f2509  --account deployer
+export AUCTION=
 
-cast send $USDC_ADDRESS "transfer(address,uint256)()" 0xe657738b17792424197AB61F95FfE6d8058663AE 1ether -r base_sepolia --account deployer
+cast send $USDC_ADDRESS -r base_sepolia "mint(address)()" $(cast wallet address --account deployer)  --account deployer
+
+cast send $USDC_ADDRESS "transfer(address,uint256)()" $AUCTION 1ether -r base_sepolia --account deployer
  ```
