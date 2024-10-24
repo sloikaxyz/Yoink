@@ -43,6 +43,10 @@ contract DollarAuction is ReentrancyGuard, Ownable {
             revert("Auction has ended.");
         }
 
+        require(
+            amount > betAmounts[msg.sender],
+            "You have to bid more than your previous bid"
+        );
         uint256 extraBid = amount - betAmounts[msg.sender];
 
         biddingToken.safeTransferFrom(msg.sender, address(this), extraBid);
@@ -58,8 +62,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     }
 
     function withdraw() public nonReentrant {
-        require(ended(), "Auction is not ended");
-        require(msg.sender != highestBidder, "You are not the highest bidder");
+        require(block.timestamp >= auctionEndTime, "Auction is not ended");
+        require(msg.sender == highestBidder, "You are not the highest bidder");
 
         betAmounts[msg.sender] = 0;
 

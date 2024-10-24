@@ -93,13 +93,12 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.prank(bidder2);
-        auction.bid(200 * 1e6);
-
         // Wait for the auction to end
         vm.warp(block.timestamp + 6 minutes);
 
         uint256 initialBalance = usdc.balanceOf(bidder1);
+        
+        // Withdraw as highest bidder
         vm.prank(bidder1);
         auction.withdraw();
 
@@ -192,7 +191,8 @@ contract DollarAuctionTest is Test {
 
         vm.warp(block.timestamp + 6 minutes);
 
-        vm.prank(bidder2);
+        // Withdraw as highest bidder
+        vm.prank(bidder1);
         auction.withdraw();
 
         assertEq(auction.auctionEndTime(), 0);
@@ -205,5 +205,129 @@ contract DollarAuctionTest is Test {
         assertEq(auction.highestBidder(), bidder3);
         assertEq(auction.highestBid(), 50 * 1e6);
         assertTrue(auction.auctionEndTime() > 0);
+    }
+
+    function testBidWithUSDC() public {
+        uint256 initialBalance = usdc.balanceOf(bidder1);
+        
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        assertEq(
+            usdc.balanceOf(bidder1),
+            initialBalance - 100 * 1e6,
+            "USDC should be transferred from bidder"
+        );
+        assertEq(
+            usdc.balanceOf(address(auction)),
+            110 * 1e6,  // Initial 10e6 + 100e6 bid
+            "Auction contract should receive USDC"
+        );
+    }
+
+    function testRefundPreviousBidder() public {
+        uint256 bidder1InitialBalance = usdc.balanceOf(bidder1);
+        uint256 bidder2InitialBalance = usdc.balanceOf(bidder2);
+
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
+        assertEq(
+            usdc.balanceOf(bidder1),
+            bidder1InitialBalance - 100 * 1e6,
+            "Previous bidder's bid should be held"
+        );
+        assertEq(
+            usdc.balanceOf(bidder2),
+            bidder2InitialBalance - 150 * 1e6,
+            "New bidder's balance should be reduced"
+        );
+    }
+
+    function testFailInsufficientUSDCBalance() public {
+        // Transfer all USDC away from bidder1
+        vm.prank(bidder1);
+        usdc.transfer(address(0), usdc.balanceOf(bidder1));
+
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+    }
+
+    function testOwnerWithdrawAll() public {
+        uint256 initialOwnerBalance = usdc.balanceOf(owner);
+        
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        vm.warp(block.timestamp + 6 minutes);
+        
+        vm.prank(owner);
+        auction.withdrawAll();
+
+        assertEq(
+            usdc.balanceOf(owner),
+            initialOwnerBalance + 110 * 1e6,  // Initial 10e6 + 100e6 bid
+            "Owner should receive all USDC"
+        );
+        assertEq(
+            usdc.balanceOf(address(auction)),
+            0,
+            "Auction contract should have 0 balance after withdrawal"
+        );
+    }
+
+    function testFailNonOwnerWithdrawAll() public {
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        vm.warp(block.timestamp + 6 minutes);
+        
+        vm.prank(bidder1);
+        auction.withdrawAll();
+    }
+
+    function testBidderWithdrawAfterAuctionEnd() public {
+        // Single bid from bidder1
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        // Wait for auction to end
+        vm.warp(block.timestamp + 6 minutes);
+
+        // Verify auction has ended
+        assertTrue(auction.ended(), "Auction should be ended");
+        
+        uint256 initialBalance = usdc.balanceOf(bidder1);
+
+        // Withdraw as highest bidder
+        vm.prank(bidder1);
+        auction.withdraw();
+
+        assertEq(
+            usdc.balanceOf(bidder1),
+            initialBalance + 1e6,
+            "Winner should receive AUCTION_AMOUNT"
+        );
+    }
+
+    // Add new test to verify non-highest bidder cannot withdraw
+    function testFailNonHighestBidderWithdraw() public {
+        // First bid from bidder1
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        // Second bid from bidder2 (becomes highest bidder)
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
+        // Wait for auction to end
+        vm.warp(block.timestamp + 6 minutes);
+
+        // Attempt withdrawal as losing bidder (should fail)
+        vm.prank(bidder1);
+        auction.withdraw();
     }
 }
