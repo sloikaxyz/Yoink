@@ -11,11 +11,13 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable biddingToken;
-    uint256 public constant BID_DURATION = 5 minutes;
+    uint256 public constant INITIAL_BID_DURATION = 5 minutes;
+    uint256 public constant MINIMUM_DURATION = 10; // 10 seconds
     uint256 public auctionAmount;
     uint256 public auctionEndTime;
     uint256 public highestBid;
     address public highestBidder;
+    uint256 public currentExtensionDuration;
 
     mapping(address => uint256) public betAmounts;
 
@@ -44,8 +46,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
                 "Not enough USDC to start auction"
             );
 
-            auctionEndTime = block.timestamp + BID_DURATION;
-
+            currentExtensionDuration = INITIAL_BID_DURATION;
+            auctionEndTime = block.timestamp + currentExtensionDuration;
             emit AuctionStarted();
         } else if (block.timestamp >= auctionEndTime) {
             revert("Auction has ended.");
@@ -64,7 +66,13 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         highestBidder = msg.sender;
         highestBid = amount;
 
-        auctionEndTime = block.timestamp + BID_DURATION;
+        auctionEndTime += currentExtensionDuration;
+
+        // Update the extension duration and auction end time
+        currentExtensionDuration = currentExtensionDuration / 2;
+        if (currentExtensionDuration < MINIMUM_DURATION) {
+            currentExtensionDuration = MINIMUM_DURATION;
+        }
 
         emit NewBid(msg.sender, amount);
     }
@@ -78,7 +86,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         biddingToken.safeTransfer(msg.sender, auctionAmount);
         emit WithdrawnFunds(msg.sender, auctionAmount);
 
-        auctionEndTime = 0; // allows to start a new auction
+        auctionEndTime = 0;
+        currentExtensionDuration = 0; // Reset extension duration for next auction
         // we don't reset the betAmounts, so the user can play again
         highestBid = 0;
         highestBidder = address(0);
