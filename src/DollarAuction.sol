@@ -5,13 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract DollarAuction is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable biddingToken;
     uint256 public constant BID_DURATION = 5 minutes;
-    uint256 public constant AUCTION_AMOUNT = 1e6;
+    uint256 public auctionAmount;
     uint256 public auctionEndTime;
     uint256 public highestBid;
     address public highestBidder;
@@ -25,6 +26,13 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
     constructor(address _biddingToken) Ownable(msg.sender) {
         biddingToken = IERC20(_biddingToken);
+        // Set default auction amount to 1 unit of token
+        auctionAmount = 10 ** IERC20Metadata(_biddingToken).decimals();
+    }
+
+    function setAuctionAmount(uint256 _newAmount) external onlyOwner {
+        require(_newAmount > 0, "Amount must be greater than 0");
+        auctionAmount = _newAmount;
     }
 
     function bid(uint256 amount) public nonReentrant {
@@ -32,7 +40,7 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
         if (auctionEndTime == 0) {
             require(
-                biddingToken.balanceOf(address(this)) >= AUCTION_AMOUNT,
+                biddingToken.balanceOf(address(this)) >= auctionAmount,
                 "Not enough USDC to start auction"
             );
 
@@ -67,8 +75,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
         betAmounts[msg.sender] = 0;
 
-        biddingToken.safeTransfer(msg.sender, AUCTION_AMOUNT);
-        emit WithdrawnFunds(msg.sender, AUCTION_AMOUNT);
+        biddingToken.safeTransfer(msg.sender, auctionAmount);
+        emit WithdrawnFunds(msg.sender, auctionAmount);
 
         auctionEndTime = 0; // allows to start a new auction
         // we don't reset the betAmounts, so the user can play again
