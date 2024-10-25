@@ -23,6 +23,8 @@ contract DollarAuctionTest is Test {
     address public bidder2;
     address public bidder3;
 
+    uint256 private INITIAL_BID_DURATION;
+
     function setUp() public {
         usdc = new MockUSDC();
         owner = address(1);
@@ -37,6 +39,8 @@ contract DollarAuctionTest is Test {
         vm.startPrank(owner);
         auction = new DollarAuction(address(usdc));
         vm.stopPrank();
+
+        INITIAL_BID_DURATION = auction.INITIAL_BID_DURATION();
 
         usdc.transfer(address(auction), 10 * 1e6);
 
@@ -94,10 +98,12 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         // Wait for the auction to end
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
+        );
 
         uint256 initialBalance = usdc.balanceOf(bidder1);
-        
+
         // Withdraw as highest bidder
         vm.prank(bidder1);
         auction.withdraw();
@@ -110,19 +116,22 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         uint256 firstEndTime = auction.auctionEndTime();
+        assertEq(auction.currentExtensionDuration(), 150); // Full INITIAL_BID_DURATION
 
-        vm.warp(block.timestamp + 4 minutes);
+        vm.warp(block.timestamp + 2 minutes);
         vm.prank(bidder2);
         auction.bid(200 * 1e6);
 
         assertGt(auction.auctionEndTime(), firstEndTime);
+        assertEq(auction.auctionEndTime(), firstEndTime + 150);
+        assertEq(auction.currentExtensionDuration(), 75); // 300 /2 / 2
     }
 
     function testAutomaticEnd() public {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(block.timestamp + 5 minutes + 5 minutes);
 
         vm.prank(bidder2);
         vm.expectRevert("Auction has ended.");
@@ -137,7 +146,9 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
+        );
 
         assertTrue(auction.ended());
 
@@ -160,14 +171,17 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        assertEq(auction.getTimeLeft(), 5 minutes);
+        uint256 firstEndTime = auction.auctionEndTime();
+        assertEq(
+            auction.getTimeLeft(),
+            INITIAL_BID_DURATION + INITIAL_BID_DURATION,
+            "Full INITIAL_BID_DURATION"
+        );
 
-        vm.warp(block.timestamp + 3 minutes);
+        vm.warp(block.timestamp + 30 seconds);
+        assertEq(auction.getTimeLeft(), firstEndTime - block.timestamp);
 
-        assertEq(auction.getTimeLeft(), 2 minutes);
-
-        vm.warp(block.timestamp + 3 minutes);
-
+        vm.warp(firstEndTime);
         assertEq(auction.getTimeLeft(), 0);
     }
 
@@ -189,7 +203,9 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
+        );
 
         // Withdraw as highest bidder
         vm.prank(bidder1);
@@ -198,6 +214,7 @@ contract DollarAuctionTest is Test {
         assertEq(auction.auctionEndTime(), 0);
         assertEq(auction.highestBid(), 0);
         assertEq(auction.highestBidder(), address(0));
+        assertEq(auction.currentExtensionDuration(), 0);
 
         vm.prank(bidder3);
         auction.bid(50 * 1e6);
@@ -205,11 +222,12 @@ contract DollarAuctionTest is Test {
         assertEq(auction.highestBidder(), bidder3);
         assertEq(auction.highestBid(), 50 * 1e6);
         assertTrue(auction.auctionEndTime() > 0);
+        assertEq(auction.currentExtensionDuration(), INITIAL_BID_DURATION / 2);
     }
 
     function testBidWithUSDC() public {
         uint256 initialBalance = usdc.balanceOf(bidder1);
-        
+
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
@@ -220,7 +238,7 @@ contract DollarAuctionTest is Test {
         );
         assertEq(
             usdc.balanceOf(address(auction)),
-            110 * 1e6,  // Initial 10e6 + 100e6 bid
+            110 * 1e6, // Initial 10e6 + 100e6 bid
             "Auction contract should receive USDC"
         );
     }
@@ -258,18 +276,18 @@ contract DollarAuctionTest is Test {
 
     function testOwnerWithdrawAll() public {
         uint256 initialOwnerBalance = usdc.balanceOf(owner);
-        
+
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
         vm.warp(block.timestamp + 6 minutes);
-        
+
         vm.prank(owner);
         auction.withdrawAll();
 
         assertEq(
             usdc.balanceOf(owner),
-            initialOwnerBalance + 110 * 1e6,  // Initial 10e6 + 100e6 bid
+            initialOwnerBalance + 110 * 1e6, // Initial 10e6 + 100e6 bid
             "Owner should receive all USDC"
         );
         assertEq(
@@ -284,7 +302,7 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         vm.warp(block.timestamp + 6 minutes);
-        
+
         vm.prank(bidder1);
         auction.withdrawAll();
     }
@@ -295,11 +313,13 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         // Wait for auction to end
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
+        );
 
         // Verify auction has ended
         assertTrue(auction.ended(), "Auction should be ended");
-        
+
         uint256 initialBalance = usdc.balanceOf(bidder1);
 
         // Withdraw as highest bidder
@@ -329,5 +349,75 @@ contract DollarAuctionTest is Test {
         // Attempt withdrawal as losing bidder (should fail)
         vm.prank(bidder1);
         auction.withdraw();
+    }
+
+    // Add this new test function after the existing tests
+    function testBidExtensionHalving() public {
+        // First bid - starts with full INITIAL_BID_DURATION (300 seconds)
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        uint256 firstEndTime = auction.auctionEndTime();
+        assertEq(auction.currentExtensionDuration(), INITIAL_BID_DURATION / 2); // After first bid it halves
+        assertEq(
+            auction.auctionEndTime(),
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION
+        );
+
+        vm.warp(block.timestamp + 30 seconds);
+        vm.prank(bidder2);
+        auction.bid(200 * 1e6);
+
+        assertEq(
+            auction.currentExtensionDuration(),
+            INITIAL_BID_DURATION / 2 / 2
+        ); // After second bid it halves again
+        assertEq(
+            auction.auctionEndTime(),
+            firstEndTime + INITIAL_BID_DURATION / 2
+        );
+
+        uint256 secondEndTime = auction.auctionEndTime();
+        vm.warp(block.timestamp + 15 seconds);
+        vm.prank(bidder3);
+        auction.bid(300 * 1e6);
+
+        assertEq(
+            auction.currentExtensionDuration(),
+            INITIAL_BID_DURATION / 2 / 2 / 2
+        );
+        assertEq(
+            auction.auctionEndTime(),
+            secondEndTime + INITIAL_BID_DURATION / 2 / 2
+        );
+
+        uint256 thirdEndTime = auction.auctionEndTime();
+        vm.warp(block.timestamp + 8 seconds);
+        vm.prank(bidder1);
+        auction.bid(400 * 1e6);
+
+        assertEq(
+            auction.currentExtensionDuration(),
+            INITIAL_BID_DURATION / 2 / 2 / 2 / 2
+        );
+        assertEq(
+            auction.auctionEndTime(),
+            thirdEndTime + INITIAL_BID_DURATION / 2 / 2 / 2
+        );
+
+        uint256 fourthEndTime = auction.auctionEndTime();
+        vm.warp(block.timestamp + 5 seconds);
+        vm.prank(bidder2);
+        auction.bid(500 * 1e6);
+
+        assertEq(
+            auction.currentExtensionDuration(),
+            auction.MINIMUM_DURATION(),
+            "Minimum duration should be reached"
+        );
+        assertEq(
+            auction.auctionEndTime(),
+            fourthEndTime + INITIAL_BID_DURATION / 2 / 2 / 2 / 2
+        );
     }
 }
