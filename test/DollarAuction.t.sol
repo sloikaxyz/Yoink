@@ -155,6 +155,9 @@ contract DollarAuctionTest is Test {
         vm.prank(owner);
         auction.withdrawAll();
 
+        vm.prank(bidder1);
+        auction.withdraw();
+
         assertEq(
             usdc.balanceOf(address(auction)),
             0,
@@ -162,7 +165,7 @@ contract DollarAuctionTest is Test {
         );
         assertEq(
             usdc.balanceOf(owner),
-            11 * 10 * 1e6,
+            100e6 + 10e6 - 1e6,
             "Owner should receive all funds"
         );
     }
@@ -280,20 +283,27 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(block.timestamp + 6 minutes);
+        // Wait until auction ends
+        vm.warp(
+            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
+        );
+
+        // Ensure auction has ended
+        assertTrue(auction.ended(), "Auction should be ended");
 
         vm.prank(owner);
         auction.withdrawAll();
 
         assertEq(
             usdc.balanceOf(owner),
-            initialOwnerBalance + 110 * 1e6, // Initial 10e6 + 100e6 bid
+            // Initial 10e6 + 100e6 bid except auction amount
+            initialOwnerBalance + 10e6 + 100e6 - auction.auctionAmount(),
             "Owner should receive all USDC"
         );
         assertEq(
             usdc.balanceOf(address(auction)),
-            0,
-            "Auction contract should have 0 balance after withdrawal"
+            auction.auctionAmount(),
+            "Auction contract should have 1 auction amount after admin withdrawal"
         );
     }
 
@@ -368,10 +378,7 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder2);
         auction.bid(200 * 1e6);
 
-        assertEq(
-            auction.nextDurationExtension(),
-            INITIAL_BID_DURATION / 2 / 2
-        ); // After second bid it halves again
+        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2 / 2); // After second bid it halves again
         assertEq(
             auction.auctionEndTime(),
             firstEndTime + INITIAL_BID_DURATION / 2
@@ -419,5 +426,48 @@ contract DollarAuctionTest is Test {
             auction.auctionEndTime(),
             fourthEndTime + INITIAL_BID_DURATION / 2 / 2 / 2 / 2
         );
+    }
+
+    // Add this test after the existing tests
+
+    function testWithdrawAllDuringActiveAuction() public {
+        uint256 initialOwnerBalance = usdc.balanceOf(owner);
+
+        // Place a bid to start the auction
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        // Owner tries to withdraw during active auction
+        vm.prank(owner);
+        auction.withdrawAll();
+
+        // Check that auction amount (1e6) remains in contract
+        assertEq(
+            usdc.balanceOf(address(auction)),
+            auction.auctionAmount(),
+            "Auction amount should remain in contract"
+        );
+
+        // Initial balance was 10e6 (from setUp) + 100e6 (from bid)
+        // After withdrawing all except auction amount (1e6), owner should receive 109e6
+        assertEq(
+            usdc.balanceOf(owner),
+            initialOwnerBalance + 100e6 + 10e6 - 1e6,
+            "Owner should receive all funds except auction amount"
+        );
+    }
+
+    function testFailWithdrawAllInsufficientBalance() public {
+        // Set auction amount higher than contract balance
+        vm.prank(owner);
+        auction.setAuctionAmount(20 * 1e6);
+
+        // Place a bid to start the auction
+        vm.prank(bidder1);
+        auction.bid(5 * 1e6);
+
+        // Try to withdraw - should fail because remaining balance would be less than auction amount
+        vm.prank(owner);
+        auction.withdrawAll();
     }
 }

@@ -94,10 +94,18 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     }
 
     function withdrawAll() public onlyOwner {
-        biddingToken.safeTransfer(
-            owner(),
-            biddingToken.balanceOf(address(this))
-        );
+        uint256 withdrawableAmount = biddingToken.balanceOf(address(this));
+
+        // If there's an active auction, reserve the auction amount
+        if (auctionEndTime != 0) {
+            require(
+                withdrawableAmount > auctionAmount,
+                "Cannot withdraw auction amount during active auction"
+            );
+            withdrawableAmount -= auctionAmount;
+        }
+
+        biddingToken.safeTransfer(owner(), withdrawableAmount);
     }
 
     function getTimeLeft() public view returns (uint256) {
