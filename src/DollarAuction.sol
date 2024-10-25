@@ -17,7 +17,7 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     uint256 public auctionEndTime;
     uint256 public highestBid;
     address public highestBidder;
-    uint256 public currentExtensionDuration;
+    uint256 public nextDurationExtension;
 
     mapping(address => uint256) public betAmounts;
 
@@ -46,8 +46,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
                 "Not enough USDC to start auction"
             );
 
-            currentExtensionDuration = INITIAL_BID_DURATION;
-            auctionEndTime = block.timestamp + currentExtensionDuration;
+            nextDurationExtension = INITIAL_BID_DURATION;
+            auctionEndTime = block.timestamp + nextDurationExtension;
             emit AuctionStarted();
         } else if (block.timestamp >= auctionEndTime) {
             revert("Auction has ended.");
@@ -66,12 +66,12 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         highestBidder = msg.sender;
         highestBid = amount;
 
-        auctionEndTime += currentExtensionDuration;
+        auctionEndTime += nextDurationExtension;
 
         // Update the extension duration and auction end time
-        currentExtensionDuration = currentExtensionDuration / 2;
-        if (currentExtensionDuration < MINIMUM_DURATION) {
-            currentExtensionDuration = MINIMUM_DURATION;
+        nextDurationExtension = nextDurationExtension / 2;
+        if (nextDurationExtension < MINIMUM_DURATION) {
+            nextDurationExtension = MINIMUM_DURATION;
         }
 
         emit NewBid(msg.sender, amount);
@@ -87,7 +87,7 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         emit WithdrawnFunds(msg.sender, auctionAmount);
 
         auctionEndTime = 0;
-        currentExtensionDuration = 0; // Reset extension duration for next auction
+        nextDurationExtension = 0; // Reset extension duration for next auction
         // we don't reset the betAmounts, so the user can play again
         highestBid = 0;
         highestBidder = address(0);

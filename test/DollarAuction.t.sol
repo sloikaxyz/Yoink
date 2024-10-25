@@ -116,7 +116,7 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         uint256 firstEndTime = auction.auctionEndTime();
-        assertEq(auction.currentExtensionDuration(), 150); // Full INITIAL_BID_DURATION
+        assertEq(auction.nextDurationExtension(), 150); // Full INITIAL_BID_DURATION
 
         vm.warp(block.timestamp + 2 minutes);
         vm.prank(bidder2);
@@ -124,7 +124,7 @@ contract DollarAuctionTest is Test {
 
         assertGt(auction.auctionEndTime(), firstEndTime);
         assertEq(auction.auctionEndTime(), firstEndTime + 150);
-        assertEq(auction.currentExtensionDuration(), 75); // 300 /2 / 2
+        assertEq(auction.nextDurationExtension(), 75); // 300 /2 / 2
     }
 
     function testAutomaticEnd() public {
@@ -214,7 +214,7 @@ contract DollarAuctionTest is Test {
         assertEq(auction.auctionEndTime(), 0);
         assertEq(auction.highestBid(), 0);
         assertEq(auction.highestBidder(), address(0));
-        assertEq(auction.currentExtensionDuration(), 0);
+        assertEq(auction.nextDurationExtension(), 0);
 
         vm.prank(bidder3);
         auction.bid(50 * 1e6);
@@ -222,7 +222,7 @@ contract DollarAuctionTest is Test {
         assertEq(auction.highestBidder(), bidder3);
         assertEq(auction.highestBid(), 50 * 1e6);
         assertTrue(auction.auctionEndTime() > 0);
-        assertEq(auction.currentExtensionDuration(), INITIAL_BID_DURATION / 2);
+        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2);
     }
 
     function testBidWithUSDC() public {
@@ -358,7 +358,7 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         uint256 firstEndTime = auction.auctionEndTime();
-        assertEq(auction.currentExtensionDuration(), INITIAL_BID_DURATION / 2); // After first bid it halves
+        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2); // After first bid it halves
         assertEq(
             auction.auctionEndTime(),
             block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION
@@ -369,7 +369,7 @@ contract DollarAuctionTest is Test {
         auction.bid(200 * 1e6);
 
         assertEq(
-            auction.currentExtensionDuration(),
+            auction.nextDurationExtension(),
             INITIAL_BID_DURATION / 2 / 2
         ); // After second bid it halves again
         assertEq(
@@ -383,7 +383,7 @@ contract DollarAuctionTest is Test {
         auction.bid(300 * 1e6);
 
         assertEq(
-            auction.currentExtensionDuration(),
+            auction.nextDurationExtension(),
             INITIAL_BID_DURATION / 2 / 2 / 2
         );
         assertEq(
@@ -397,7 +397,7 @@ contract DollarAuctionTest is Test {
         auction.bid(400 * 1e6);
 
         assertEq(
-            auction.currentExtensionDuration(),
+            auction.nextDurationExtension(),
             INITIAL_BID_DURATION / 2 / 2 / 2 / 2
         );
         assertEq(
@@ -411,7 +411,7 @@ contract DollarAuctionTest is Test {
         auction.bid(500 * 1e6);
 
         assertEq(
-            auction.currentExtensionDuration(),
+            auction.nextDurationExtension(),
             auction.MINIMUM_DURATION(),
             "Minimum duration should be reached"
         );
