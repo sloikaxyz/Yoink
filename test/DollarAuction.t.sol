@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/DollarAuction.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../src/DollarAuction.sol";
 
 contract MockUSDC is ERC20 {
     constructor() ERC20("Mock USDC", "USDC") {
@@ -528,5 +528,74 @@ contract DollarAuctionTest is Test {
         assertEq(auction.betAmounts(bidder1), 100e6);
         assertEq(auction.betAmounts(bidder2), 150e6);
         assertEq(auction.betAmounts(bidder3), 0);
+    }
+
+    function testOperatorBidding() public {
+        address operator = address(5);
+
+        // Grant operator role
+        vm.prank(owner);
+        auction.setOperator(operator);
+
+        // approve max amount
+        vm.prank(bidder1);
+        usdc.approve(address(auction), type(uint256).max);
+
+        // Operator submits bid for bidder1
+        vm.prank(operator);
+        auction.bidFor(bidder1, 100 * 1e6);
+
+        assertEq(auction.highestBidder(), bidder1);
+        assertEq(auction.highestBid(), 100 * 1e6);
+        assertEq(auction.betAmounts(bidder1), 100 * 1e6);
+    }
+
+    function testFailNonOperatorBidding() public {
+        address nonOperator = address(5);
+
+        // Non-operator tries to submit bid for bidder1
+        vm.prank(nonOperator);
+        auction.bidFor(bidder1, 100 * 1e6);
+    }
+
+    function testOperatorManagement() public {
+        address operator = address(5);
+
+        // Only owner can add operators
+        vm.prank(owner);
+        auction.setOperator(operator);
+
+        vm.prank(bidder1);
+        usdc.approve(address(auction), type(uint256).max);
+
+        // Operator can now submit bids
+        vm.prank(operator);
+        auction.bidFor(bidder1, 100 * 1e6);
+
+        // Owner can remove operator
+        vm.prank(owner);
+        auction.setOperator(address(0));
+
+        // Operator can no longer submit bids
+        vm.prank(operator);
+        vm.expectRevert("Only operator can call this function");
+        auction.bidFor(bidder1, 200 * 1e6);
+    }
+
+    function testOperatorBiddingRequiresApproval() public {
+        address operator = address(5);
+
+        // Grant operator role
+        vm.prank(owner);
+        auction.setOperator(operator);
+
+        // Remove bidder1's approval
+        vm.prank(bidder1);
+        usdc.approve(address(auction), 0);
+
+        // Operator tries to submit bid for bidder1 - should fail
+        vm.prank(operator);
+        vm.expectRevert();
+        auction.bidFor(bidder1, 100 * 1e6);
     }
 }

@@ -7,6 +7,10 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+function max(uint256 a, uint256 b) pure returns (uint256) {
+    return a > b ? a : b;
+}
+
 contract DollarAuction is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
@@ -19,6 +23,8 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     address public highestBidder;
     uint256 public nextDurationExtension;
 
+    address public operator;
+
     mapping(address => uint256) public betAmounts;
 
     event NewBid(address indexed bidder, uint256 amount);
@@ -30,6 +36,13 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         biddingToken = IERC20(_biddingToken);
         // Set default auction amount to 1 unit of token
         auctionAmount = 10 ** IERC20Metadata(_biddingToken).decimals();
+
+        operator = msg.sender;
+    }
+
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Only operator can call this function");
+        _;
     }
 
     function setAuctionAmount(uint256 _newAmount) external onlyOwner {
@@ -37,9 +50,15 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         auctionAmount = _newAmount;
     }
 
-    function bid(uint256 amount) public nonReentrant {
-        require(amount > highestBid, "Bid not high enough");
+    function bid(uint256 amount) external nonReentrant {
+        _processBid(msg.sender, amount);
+    }
 
+    function bidFor(address bidder, uint256 amount) external onlyOperator {
+        _processBid(bidder, amount);
+    }
+
+    function _processBid(address bidder, uint256 amount) internal {
         if (auctionEndTime == 0) {
             require(
                 biddingToken.balanceOf(address(this)) >= auctionAmount,
@@ -54,27 +73,32 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         }
 
         require(
-            amount > betAmounts[msg.sender],
+            amount > highestBid,
+            "Bid amount must be greater than current bid"
+        );
+
+        require(
+            amount > betAmounts[bidder],
             "You have to bid more than your previous bid"
         );
-        uint256 extraBid = amount - betAmounts[msg.sender];
+        uint256 extraBid = amount - betAmounts[bidder];
 
-        biddingToken.safeTransferFrom(msg.sender, address(this), extraBid);
+        biddingToken.safeTransferFrom(bidder, address(this), extraBid);
 
-        betAmounts[msg.sender] = amount;
+        betAmounts[bidder] = amount;
 
-        highestBidder = msg.sender;
+        highestBidder = bidder;
         highestBid = amount;
 
         auctionEndTime += nextDurationExtension;
 
         // Update the extension duration and auction end time
-        nextDurationExtension = nextDurationExtension / 2;
-        if (nextDurationExtension < MINIMUM_DURATION) {
-            nextDurationExtension = MINIMUM_DURATION;
-        }
+        nextDurationExtension = max(
+            nextDurationExtension / 2,
+            MINIMUM_DURATION
+        );
 
-        emit NewBid(msg.sender, amount);
+        emit NewBid(bidder, amount);
     }
 
     function withdraw() public nonReentrant {
@@ -116,5 +140,9 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
     function ended() public view returns (bool) {
         return auctionEndTime != 0 && block.timestamp >= auctionEndTime;
+    }
+
+    function setOperator(address _operator) external onlyOwner {
+        operator = _operator;
     }
 }
