@@ -79,12 +79,12 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
     function withdraw() public nonReentrant {
         require(block.timestamp >= auctionEndTime, "Auction is not ended");
-        require(msg.sender == highestBidder, "You are not the highest bidder");
+        require(highestBidder != address(0), "No bids yet");
 
-        betAmounts[msg.sender] = 0;
+        betAmounts[highestBidder] = 0;
 
-        biddingToken.safeTransfer(msg.sender, auctionAmount);
-        emit WithdrawnFunds(msg.sender, auctionAmount);
+        biddingToken.safeTransfer(highestBidder, auctionAmount);
+        emit WithdrawnFunds(highestBidder, auctionAmount);
 
         auctionEndTime = 0;
         nextDurationExtension = 0; // Reset extension duration for next auction

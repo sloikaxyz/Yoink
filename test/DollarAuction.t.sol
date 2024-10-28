@@ -470,4 +470,63 @@ contract DollarAuctionTest is Test {
         vm.prank(owner);
         auction.withdrawAll();
     }
+
+    function testAllBiddersCanWithdraw() public {
+        // First bid from bidder1
+        vm.prank(bidder1);
+        auction.bid(100 * 1e6);
+
+        // Second bid from bidder2
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
+        // Third and winning bid from bidder3
+        vm.prank(bidder3);
+        auction.bid(200 * 1e6);
+
+        // Record balances before withdrawal
+        uint256 bidder1BalanceBefore = usdc.balanceOf(bidder1);
+        uint256 bidder2BalanceBefore = usdc.balanceOf(bidder2);
+        uint256 bidder3BalanceBefore = usdc.balanceOf(bidder3);
+
+        // Wait for auction to end
+        vm.warp(
+            block.timestamp +
+                INITIAL_BID_DURATION +
+                INITIAL_BID_DURATION +
+                INITIAL_BID_DURATION +
+                1
+        );
+        assertTrue(auction.ended(), "Auction should be ended");
+
+        // Any bidder can withdraw
+        vm.prank(bidder2);
+        auction.withdraw();
+
+        // Verify bidder1 got nothing
+        assertEq(
+            usdc.balanceOf(bidder1),
+            bidder1BalanceBefore,
+            "Bidder1 should get nothing"
+        );
+
+        // Verify bidder2 got nothing
+        assertEq(
+            usdc.balanceOf(bidder2),
+            bidder2BalanceBefore,
+            "Bidder2 should get nothing"
+        );
+
+        // Verify bidder3 (winner) got auction amount
+        assertEq(
+            usdc.balanceOf(bidder3),
+            bidder3BalanceBefore + 1e6,
+            "Winner should get auction amount"
+        );
+
+        // check betAmounts are reset only for winner
+        assertEq(auction.betAmounts(bidder1), 100e6);
+        assertEq(auction.betAmounts(bidder2), 150e6);
+        assertEq(auction.betAmounts(bidder3), 0);
+    }
 }
