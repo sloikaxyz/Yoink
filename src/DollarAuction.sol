@@ -16,21 +16,22 @@ contract DollarAuction is ReentrancyGuard, Ownable {
 
     IERC20 public immutable biddingToken;
     uint256 public constant INITIAL_BID_DURATION = 5 minutes;
-    uint256 public constant MINIMUM_DURATION = 10; // 10 seconds
+    uint256 public constant MINIMUM_DURATION = 30 seconds;
     uint256 public auctionAmount;
     uint256 public auctionEndTime;
     uint256 public highestBid;
     address public highestBidder;
-    uint256 public nextDurationExtension;
 
     address public operator;
 
-    mapping(address => uint256) public betAmounts;
+    mapping(uint256 => mapping(address => uint256)) public betAmounts;
 
     event NewBid(address indexed bidder, uint256 amount);
     event AuctionEnded(address indexed winner, uint256 winningBid);
     event WithdrawnFunds(address indexed bidder, uint256 amount);
     event AuctionStarted();
+
+    uint256 public auctionId;
 
     constructor(address _biddingToken) Ownable(msg.sender) {
         biddingToken = IERC20(_biddingToken);
@@ -65,8 +66,7 @@ contract DollarAuction is ReentrancyGuard, Ownable {
                 "Not enough USDC to start auction"
             );
 
-            nextDurationExtension = INITIAL_BID_DURATION;
-            auctionEndTime = block.timestamp + nextDurationExtension;
+            auctionEndTime = block.timestamp + INITIAL_BID_DURATION;
             emit AuctionStarted();
         } else if (block.timestamp >= auctionEndTime) {
             revert("Auction has ended.");
@@ -78,25 +78,21 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         );
 
         require(
-            amount > betAmounts[bidder],
+            amount > betAmounts[auctionId][bidder],
             "You have to bid more than your previous bid"
         );
-        uint256 extraBid = amount - betAmounts[bidder];
+        uint256 extraBid = amount - betAmounts[auctionId][bidder];
 
         biddingToken.safeTransferFrom(bidder, address(this), extraBid);
 
-        betAmounts[bidder] = amount;
+        betAmounts[auctionId][bidder] = amount;
 
         highestBidder = bidder;
         highestBid = amount;
 
-        auctionEndTime += nextDurationExtension;
-
-        // Update the extension duration and auction end time
-        nextDurationExtension = max(
-            nextDurationExtension / 2,
-            MINIMUM_DURATION
-        );
+        if (getTimeLeft() < 1 minutes) {
+            auctionEndTime = block.timestamp + MINIMUM_DURATION;
+        }
 
         emit NewBid(bidder, amount);
     }
@@ -105,16 +101,20 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         require(block.timestamp >= auctionEndTime, "Auction is not ended");
         require(highestBidder != address(0), "No bids yet");
 
-        betAmounts[highestBidder] = 0;
+        // Reset all bids for the current auction
+        // it happens automatically
+        // betAmounts[auctionId][highestBidder] = 0;
 
         biddingToken.safeTransfer(highestBidder, auctionAmount);
         emit WithdrawnFunds(highestBidder, auctionAmount);
 
         auctionEndTime = 0;
-        nextDurationExtension = 0; // Reset extension duration for next auction
         // we don't reset the betAmounts, so the user can play again
         highestBid = 0;
         highestBidder = address(0);
+
+        // This starts a new auction and invalidates all previous bids
+        auctionId++;
     }
 
     function withdrawAll() public onlyOwner {
@@ -130,6 +130,11 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         }
 
         biddingToken.safeTransfer(owner(), withdrawableAmount);
+    }
+
+    // returns the amount of tokens the bidder has bet on the current auction
+    function currentBetAmount(address bidder) public view returns (uint256) {
+        return betAmounts[auctionId][bidder];
     }
 
     function getTimeLeft() public view returns (uint256) {

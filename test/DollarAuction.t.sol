@@ -116,15 +116,20 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         uint256 firstEndTime = auction.auctionEndTime();
-        assertEq(auction.nextDurationExtension(), 150); // Full INITIAL_BID_DURATION
 
-        vm.warp(block.timestamp + 2 minutes);
+        // Fast forward to just under 1 minute left
+        vm.warp(firstEndTime - 50 seconds);
+        uint256 timeLeft = auction.getTimeLeft();
+        assertLt(timeLeft, 1 minutes);
+
         vm.prank(bidder2);
         auction.bid(200 * 1e6);
 
-        assertGt(auction.auctionEndTime(), firstEndTime);
-        assertEq(auction.auctionEndTime(), firstEndTime + 150);
-        assertEq(auction.nextDurationExtension(), 75); // 300 /2 / 2
+        // Auction end time should extend by MINIMUM_DURATION (30 seconds)
+        assertEq(
+            auction.auctionEndTime(),
+            block.timestamp + auction.MINIMUM_DURATION()
+        );
     }
 
     function testAutomaticEnd() public {
@@ -177,7 +182,7 @@ contract DollarAuctionTest is Test {
         uint256 firstEndTime = auction.auctionEndTime();
         assertEq(
             auction.getTimeLeft(),
-            INITIAL_BID_DURATION + INITIAL_BID_DURATION,
+            INITIAL_BID_DURATION,
             "Full INITIAL_BID_DURATION"
         );
 
@@ -198,7 +203,7 @@ contract DollarAuctionTest is Test {
 
         assertEq(auction.highestBidder(), bidder1);
         assertEq(auction.highestBid(), 150 * 1e6);
-        assertEq(auction.betAmounts(bidder1), 150 * 1e6);
+        assertEq(auction.currentBetAmount(bidder1), 150 * 1e6);
     }
 
     // Add a new test for starting a new auction after withdrawal
@@ -206,9 +211,7 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
-        );
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
         // Withdraw as highest bidder
         vm.prank(bidder1);
@@ -217,7 +220,6 @@ contract DollarAuctionTest is Test {
         assertEq(auction.auctionEndTime(), 0);
         assertEq(auction.highestBid(), 0);
         assertEq(auction.highestBidder(), address(0));
-        assertEq(auction.nextDurationExtension(), 0);
 
         vm.prank(bidder3);
         auction.bid(50 * 1e6);
@@ -225,7 +227,6 @@ contract DollarAuctionTest is Test {
         assertEq(auction.highestBidder(), bidder3);
         assertEq(auction.highestBid(), 50 * 1e6);
         assertTrue(auction.auctionEndTime() > 0);
-        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2);
     }
 
     function testBidWithUSDC() public {
@@ -284,9 +285,7 @@ contract DollarAuctionTest is Test {
         auction.bid(100 * 1e6);
 
         // Wait until auction ends
-        vm.warp(
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
-        );
+        vm.warp(auction.auctionEndTime() + 1);
 
         // Ensure auction has ended
         assertTrue(auction.ended(), "Auction should be ended");
@@ -294,11 +293,11 @@ contract DollarAuctionTest is Test {
         vm.prank(owner);
         auction.withdrawAll();
 
+        // Since the auction amount is reserved during an active auction, ensure that only excess funds are withdrawn
         assertEq(
             usdc.balanceOf(owner),
-            // Initial 10e6 + 100e6 bid except auction amount
-            initialOwnerBalance + 10e6 + 100e6 - auction.auctionAmount(),
-            "Owner should receive all USDC"
+            initialOwnerBalance + 100e6 + 10e6 - auction.auctionAmount(),
+            "Owner should receive all USDC except auction amount"
         );
         assertEq(
             usdc.balanceOf(address(auction)),
@@ -344,7 +343,7 @@ contract DollarAuctionTest is Test {
     }
 
     // Add new test to verify non-highest bidder cannot withdraw
-    function testFailNonHighestBidderWithdraw() public {
+    function testNonHighestBidderWithdraw() public {
         // First bid from bidder1
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
@@ -354,81 +353,34 @@ contract DollarAuctionTest is Test {
         auction.bid(150 * 1e6);
 
         // Wait for auction to end
-        vm.warp(block.timestamp + 6 minutes);
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
-        // Attempt withdrawal as losing bidder (should fail)
+        // Withdrawal as losing bidder
         vm.prank(bidder1);
         auction.withdraw();
     }
 
     // Add this new test function after the existing tests
-    function testBidExtensionHalving() public {
-        // First bid - starts with full INITIAL_BID_DURATION (300 seconds)
+    function testLostBidsResetAfterAuction() public {
+        // Bidder1 places a bid in the first auction
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        uint256 firstEndTime = auction.auctionEndTime();
-        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2); // After first bid it halves
-        assertEq(
-            auction.auctionEndTime(),
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION
-        );
+        // Wait for the auction to end
+        vm.warp(auction.auctionEndTime() + 1);
 
-        vm.warp(block.timestamp + 30 seconds);
-        vm.prank(bidder2);
-        auction.bid(200 * 1e6);
-
-        assertEq(auction.nextDurationExtension(), INITIAL_BID_DURATION / 2 / 2); // After second bid it halves again
-        assertEq(
-            auction.auctionEndTime(),
-            firstEndTime + INITIAL_BID_DURATION / 2
-        );
-
-        uint256 secondEndTime = auction.auctionEndTime();
-        vm.warp(block.timestamp + 15 seconds);
-        vm.prank(bidder3);
-        auction.bid(300 * 1e6);
-
-        assertEq(
-            auction.nextDurationExtension(),
-            INITIAL_BID_DURATION / 2 / 2 / 2
-        );
-        assertEq(
-            auction.auctionEndTime(),
-            secondEndTime + INITIAL_BID_DURATION / 2 / 2
-        );
-
-        uint256 thirdEndTime = auction.auctionEndTime();
-        vm.warp(block.timestamp + 8 seconds);
+        // Bidder1 withdraws to end the auction
         vm.prank(bidder1);
-        auction.bid(400 * 1e6);
+        auction.withdraw();
 
-        assertEq(
-            auction.nextDurationExtension(),
-            INITIAL_BID_DURATION / 2 / 2 / 2 / 2
-        );
-        assertEq(
-            auction.auctionEndTime(),
-            thirdEndTime + INITIAL_BID_DURATION / 2 / 2 / 2
-        );
-
-        uint256 fourthEndTime = auction.auctionEndTime();
-        vm.warp(block.timestamp + 5 seconds);
+        // Start a new auction with Bidder2
         vm.prank(bidder2);
-        auction.bid(500 * 1e6);
+        auction.bid(50 * 1e6);
 
-        assertEq(
-            auction.nextDurationExtension(),
-            auction.MINIMUM_DURATION(),
-            "Minimum duration should be reached"
-        );
-        assertEq(
-            auction.auctionEndTime(),
-            fourthEndTime + INITIAL_BID_DURATION / 2 / 2 / 2 / 2
-        );
+        // Ensure that Bidder1's previous betAmount is reset
+        assertEq(auction.betAmounts(auction.auctionId(), bidder1), 0);
+        assertEq(auction.betAmounts(auction.auctionId(), bidder2), 50 * 1e6);
     }
-
-    // Add this test after the existing tests
 
     function testWithdrawAllDuringActiveAuction() public {
         uint256 initialOwnerBalance = usdc.balanceOf(owner);
@@ -490,14 +442,13 @@ contract DollarAuctionTest is Test {
         uint256 bidder3BalanceBefore = usdc.balanceOf(bidder3);
 
         // Wait for auction to end
-        vm.warp(
-            block.timestamp +
-                INITIAL_BID_DURATION +
-                INITIAL_BID_DURATION +
-                INITIAL_BID_DURATION +
-                1
-        );
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
         assertTrue(auction.ended(), "Auction should be ended");
+
+        // Verify current bet amounts
+        assertEq(auction.currentBetAmount(bidder1), 100e6);
+        assertEq(auction.currentBetAmount(bidder2), 150e6);
+        assertEq(auction.currentBetAmount(bidder3), 200e6);
 
         // Any bidder can withdraw
         vm.prank(bidder2);
@@ -524,10 +475,10 @@ contract DollarAuctionTest is Test {
             "Winner should get auction amount"
         );
 
-        // check betAmounts are reset only for winner
-        assertEq(auction.betAmounts(bidder1), 100e6);
-        assertEq(auction.betAmounts(bidder2), 150e6);
-        assertEq(auction.betAmounts(bidder3), 0);
+        // All bids should be reset for the current auction
+        assertEq(auction.currentBetAmount(bidder1), 0);
+        assertEq(auction.currentBetAmount(bidder2), 0);
+        assertEq(auction.currentBetAmount(bidder3), 0);
     }
 
     function testOperatorBidding() public {
@@ -547,7 +498,7 @@ contract DollarAuctionTest is Test {
 
         assertEq(auction.highestBidder(), bidder1);
         assertEq(auction.highestBid(), 100 * 1e6);
-        assertEq(auction.betAmounts(bidder1), 100 * 1e6);
+        assertEq(auction.currentBetAmount(bidder1), 100 * 1e6);
     }
 
     function testFailNonOperatorBidding() public {
