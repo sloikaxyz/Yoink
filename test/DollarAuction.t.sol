@@ -52,7 +52,7 @@ contract DollarAuctionTest is Test {
         usdc.approve(address(auction), type(uint256).max);
     }
 
-    function testInitialState() public {
+    function testInitialState() public view {
         assertEq(auction.owner(), owner, "Owner should be set");
         assertEq(auction.highestBid(), 0, "Highest bid should be 0");
         assertEq(
@@ -96,6 +96,9 @@ contract DollarAuctionTest is Test {
     function testWithdraw() public {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
+
+        vm.expectRevert("Auction is not ended");
+        auction.withdraw();
 
         // Wait for the auction to end
         vm.warp(

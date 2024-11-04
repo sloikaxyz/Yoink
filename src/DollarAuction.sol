@@ -101,20 +101,18 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         require(block.timestamp >= auctionEndTime, "Auction is not ended");
         require(highestBidder != address(0), "No bids yet");
 
-        // Reset all bids for the current auction
-        // it happens automatically
-        // betAmounts[auctionId][highestBidder] = 0;
-
-        biddingToken.safeTransfer(highestBidder, auctionAmount);
-        emit WithdrawnFunds(highestBidder, auctionAmount);
-
-        auctionEndTime = 0;
-        // we don't reset the betAmounts, so the user can play again
-        highestBid = 0;
-        highestBidder = address(0);
+        address winner = highestBidder;
 
         // This starts a new auction and invalidates all previous bids
         auctionId++;
+
+        auctionEndTime = 0;
+        highestBid = 0;
+        highestBidder = address(0);
+
+        // Transfer the auction amount to the highest bidder
+        biddingToken.safeTransfer(winner, auctionAmount);
+        emit WithdrawnFunds(winner, auctionAmount);
     }
 
     function withdrawAll() public onlyOwner {
