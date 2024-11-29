@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  useSwitchNetwork,
-  useNetwork,
   Chain,
-  useSendTransaction,
-  useWaitForTransaction,
+  useAccount,
+  useBalance,
   useContractRead,
+  useNetwork,
+  useSendTransaction,
+  useSwitchNetwork,
+  useWaitForTransaction,
 } from "wagmi";
 import { sepolia } from "wagmi/chains";
-import { FREYSA_ADDRESS, FREYSA_ABI } from "../FREYSA_ADDRESS";
+import { FREYSA_ABI, FREYSA_ADDRESS } from "../FREYSA_ADDRESS";
 
 const moaiChain: Chain = {
   id: 42069,
@@ -55,6 +57,12 @@ export function NetworkInfo() {
     abi: FREYSA_ABI,
     functionName: "getCurrentQueryFee",
     watch: true,
+  });
+
+  const { address } = useAccount();
+  const { data: moaiBalance } = useBalance({
+    address,
+    chainId: moaiChain.id,
   });
 
   useEffect(() => {
@@ -111,20 +119,46 @@ export function NetworkInfo() {
     }
   };
   return (
-    <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-      <h2 className="text-xl font-bold">Network Information</h2>
+    <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg space-y-6 border border-gray-700">
+      <div>
+        <h2 className="text-xl font-bold mb-4">Network Information</h2>
+        <div className="grid gap-3">
+          <div className="flex justify-between items-center py-2 px-3 bg-gray-800 rounded-md">
+            <span className="text-gray-400">RPC URL</span>
+            <span className="font-mono text-sm">{moaiChain.rpcUrls.default.http[0]}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 px-3 bg-gray-800 rounded-md">
+            <span className="text-gray-400">Chain ID</span>
+            <span className="font-mono">{moaiChain.id}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 px-3 bg-gray-800 rounded-md">
+            <span className="text-gray-400">Balance</span>
+            <span className="font-mono">
+              {moaiBalance
+                ? `${parseFloat(moaiBalance.formatted).toFixed(4)} ${moaiBalance.symbol}`
+                : "..."}
+            </span>
+          </div>
+        </div>
 
-      <div className="space-y-2">
-        <p>RPC URL: {moaiChain.rpcUrls.default.http[0]}</p>
-        <p>Chain ID: {moaiChain.id}</p>
         <button
           onClick={addNetwork}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className={`mt-4 w-full py-2 px-4 rounded-md transition-colors ${
+            chain?.id === moaiChain.id
+              ? "bg-green-600/20 text-green-400 hover:bg-green-600/30"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
         >
-          {chain?.id === moaiChain.id
-            ? "Connected to mo.ai"
-            : "Switch to mo.ai Network"}
+          {chain?.id === moaiChain.id ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              Connected to mo.ai
+            </div>
+          ) : (
+            "Switch to mo.ai Network"
+          )}
         </button>
+
         {switchError && (
           <p className="text-red-500 text-sm mt-2">
             Error switching network. Please make sure your wallet is connected.
@@ -132,45 +166,51 @@ export function NetworkInfo() {
         )}
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Bridge Your ETH</h3>
-        <p className="font-mono break-all bg-gray-700 p-2 rounded">
-          Bridge Address: {BRIDGE_ADDRESS}
-        </p>
-        <p className="text-sm text-gray-400 mt-2">
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold">Bridge Your ETH</h3>
+        <div className="bg-gray-800 p-3 rounded-md">
+          <p className="text-gray-400 text-sm mb-1">Bridge Address</p>
+          <p className="font-mono text-sm break-all">{BRIDGE_ADDRESS}</p>
+        </div>
+        <p className="text-sm text-gray-400">
           Send ETH to this address to bridge it to mo.ai network
         </p>
-      </div>
 
-      <div className="space-y-4">
         <button
           onClick={handleBridge}
-          className="btn-primary w-full"
           disabled={isBridging}
+          className="w-full py-2 px-4 rounded-md bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed transition-colors"
         >
-          {isBridging ? "Bridging in progress..." : "Bridge ETH"}
+          {isBridging ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Bridging in progress...
+            </div>
+          ) : (
+            "Bridge ETH"
+          )}
         </button>
 
         {bridgeStatus && (
-          <div className="space-y-2">
-            <div className="text-sm text-center">{bridgeStatus}</div>
-
-            <div className="text-sm text-blue-400 text-center">
-              {bridgeTxHash && (
+          <div className="mt-4 space-y-2">
+            <div className="text-sm text-center text-blue-400">{bridgeStatus}</div>
+            {bridgeTxHash && (
+              <div className="text-sm text-center">
                 <a
                   href={`https://sepolia.etherscan.io/tx/${bridgeTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
                 >
                   View on Etherscan
                 </a>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
         {bridgeError && (
-          <div className="text-sm text-red-400 text-center">
+          <div className="text-sm text-red-400 text-center mt-2">
             Error: {bridgeError}
           </div>
         )}
