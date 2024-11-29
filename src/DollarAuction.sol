@@ -15,8 +15,10 @@ contract DollarAuction is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable biddingToken;
+    uint256 public constant INITIAL_WAITING_PERIOD = 24 hours;
     uint256 public constant INITIAL_BID_DURATION = 5 minutes;
     uint256 public constant MINIMUM_DURATION = 30 seconds;
+
     uint256 public auctionAmount;
     uint256 public auctionEndTime;
     uint256 public highestBid;
@@ -66,7 +68,7 @@ contract DollarAuction is ReentrancyGuard, Ownable {
                 "Not enough USDC to start auction"
             );
 
-            auctionEndTime = block.timestamp + INITIAL_BID_DURATION;
+            auctionEndTime = block.timestamp + INITIAL_WAITING_PERIOD;
             emit AuctionStarted();
         } else if (block.timestamp >= auctionEndTime) {
             revert("Auction has ended.");
@@ -86,6 +88,13 @@ contract DollarAuction is ReentrancyGuard, Ownable {
         biddingToken.safeTransferFrom(bidder, address(this), extraBid);
 
         betAmounts[auctionId][bidder] = amount;
+
+        if (
+            highestBidder != address(0) &&
+            auctionEndTime > block.timestamp + INITIAL_BID_DURATION
+        ) {
+            auctionEndTime = block.timestamp + INITIAL_BID_DURATION;
+        }
 
         highestBidder = bidder;
         highestBid = amount;

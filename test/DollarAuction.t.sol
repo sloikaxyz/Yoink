@@ -24,6 +24,7 @@ contract DollarAuctionTest is Test {
     address public bidder3;
 
     uint256 private INITIAL_BID_DURATION;
+    uint256 private INITIAL_WAITING_PERIOD;
 
     function setUp() public {
         usdc = new MockUSDC();
@@ -41,6 +42,7 @@ contract DollarAuctionTest is Test {
         vm.stopPrank();
 
         INITIAL_BID_DURATION = auction.INITIAL_BID_DURATION();
+        INITIAL_WAITING_PERIOD = auction.INITIAL_WAITING_PERIOD();
 
         usdc.transfer(address(auction), 10 * 1e6);
 
@@ -97,21 +99,22 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
         vm.expectRevert("Auction is not ended");
         auction.withdraw();
 
         // Wait for the auction to end
-        vm.warp(
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
-        );
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
-        uint256 initialBalance = usdc.balanceOf(bidder1);
+        uint256 initialBalance = usdc.balanceOf(bidder2);
 
         // Withdraw as highest bidder
-        vm.prank(bidder1);
+        vm.prank(bidder2);
         auction.withdraw();
 
-        assertEq(usdc.balanceOf(bidder1), initialBalance + 1e6); // AUCTION_AMOUNT is 1e6
+        assertEq(usdc.balanceOf(bidder2), initialBalance + 1e6); // AUCTION_AMOUNT is 1e6
     }
 
     function testAuctionExtension() public {
@@ -139,31 +142,35 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(block.timestamp + 5 minutes + 5 minutes);
-
         vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
+
+        vm.prank(bidder3);
         vm.expectRevert("Auction has ended.");
         auction.bid(200 * 1e6);
 
         assertTrue(auction.ended());
-        assertEq(auction.highestBidder(), bidder1);
-        assertEq(auction.highestBid(), 100 * 1e6);
+        assertEq(auction.highestBidder(), bidder2);
+        assertEq(auction.highestBid(), 150 * 1e6);
     }
 
     function testCheckAndEndAuction() public {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        vm.warp(
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
-        );
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
         assertTrue(auction.ended());
 
         vm.prank(owner);
         auction.withdrawAll();
 
-        vm.prank(bidder1);
+        vm.prank(bidder2);
         auction.withdraw();
 
         assertEq(
@@ -173,7 +180,7 @@ contract DollarAuctionTest is Test {
         );
         assertEq(
             usdc.balanceOf(owner),
-            100e6 + 10e6 - 1e6,
+            259e6, // 150e6 (highest bid) + 110e6 (initial balance) - 1e6 (auction amount)
             "Owner should receive all funds"
         );
     }
@@ -182,17 +189,29 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
-        uint256 firstEndTime = auction.auctionEndTime();
+        assertEq(
+            auction.getTimeLeft(),
+            INITIAL_WAITING_PERIOD,
+            "Full INITIAL_WAITING_PERIOD"
+        );
+
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
         assertEq(
             auction.getTimeLeft(),
             INITIAL_BID_DURATION,
-            "Full INITIAL_BID_DURATION"
+            "Should switch to INITIAL_BID_DURATION"
         );
 
         vm.warp(block.timestamp + 30 seconds);
-        assertEq(auction.getTimeLeft(), firstEndTime - block.timestamp);
+        assertEq(
+            auction.getTimeLeft(),
+            INITIAL_BID_DURATION - 30 seconds,
+            "Should have 30 seconds less"
+        );
 
-        vm.warp(firstEndTime);
+        vm.warp(block.timestamp + INITIAL_BID_DURATION);
         assertEq(auction.getTimeLeft(), 0);
     }
 
@@ -214,10 +233,13 @@ contract DollarAuctionTest is Test {
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
         vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
         // Withdraw as highest bidder
-        vm.prank(bidder1);
+        vm.prank(bidder2);
         auction.withdraw();
 
         assertEq(auction.auctionEndTime(), 0);
@@ -320,26 +342,26 @@ contract DollarAuctionTest is Test {
     }
 
     function testBidderWithdrawAfterAuctionEnd() public {
-        // Single bid from bidder1
         vm.prank(bidder1);
         auction.bid(100 * 1e6);
 
+        vm.prank(bidder2);
+        auction.bid(150 * 1e6);
+
         // Wait for auction to end
-        vm.warp(
-            block.timestamp + INITIAL_BID_DURATION + INITIAL_BID_DURATION + 1
-        );
+        vm.warp(block.timestamp + INITIAL_BID_DURATION + 1);
 
         // Verify auction has ended
         assertTrue(auction.ended(), "Auction should be ended");
 
-        uint256 initialBalance = usdc.balanceOf(bidder1);
+        uint256 initialBalance = usdc.balanceOf(bidder2);
 
         // Withdraw as highest bidder
-        vm.prank(bidder1);
+        vm.prank(bidder2);
         auction.withdraw();
 
         assertEq(
-            usdc.balanceOf(bidder1),
+            usdc.balanceOf(bidder2),
             initialBalance + 1e6,
             "Winner should receive AUCTION_AMOUNT"
         );
