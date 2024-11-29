@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-interface IAI {
-    function chat(string calldata systemPrompt, string calldata userMessage) external returns (string memory);
-}
+import {IAI} from "./IAI.sol";
 
 contract AIAgent {
     string public constant AI_PROMPT =

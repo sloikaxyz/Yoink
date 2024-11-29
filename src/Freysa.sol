@@ -2,13 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface IAI {
-    function chat(
-        string calldata systemPrompt,
-        string calldata userMessage
-    ) external returns (string memory);
-}
+import {IAI} from "./IAI.sol";
 
 contract Freysa is Ownable {
     string public constant SYSTEM_PROMPT =
@@ -116,6 +110,9 @@ contract Freysa is Ownable {
         }
 
         // Get the last line
+
+
+
         bytes memory lastLine = new bytes(responseBytes.length - lastLineStart);
         for (uint256 i = lastLineStart; i < responseBytes.length; i++) {
             lastLine[i - lastLineStart] = responseBytes[i];
