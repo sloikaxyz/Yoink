@@ -1,79 +1,76 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useContractRead, useContractWrite, useAccount, useConnect } from 'wagmi'
-import { InjectedConnector } from 'wagmi/connectors/injected'
-import { parseEther } from 'viem'
-import { NetworkInfo } from './components/NetworkInfo'
+import { useState } from "react";
+import {
+  useAccount,
+  useConnect,
+  useContractRead,
+  useContractWrite,
+} from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
-const FREYSA_ADDRESS = '0x750C3f90549774b4a0367cF9D583187b44D1C775'
+import { NetworkInfo } from "./components/NetworkInfo";
+
+const FREYSA_ADDRESS = "0x750C3f90549774b4a0367cF9D583187b44D1C775";
 
 const FREYSA_ABI = [
   {
     inputs: [],
-    name: 'getCurrentQueryFee',
-    outputs: [{ type: 'uint256', name: '' }],
-    stateMutability: 'view',
-    type: 'function',
+    name: "getCurrentQueryFee",
+    outputs: [{ type: "uint256", name: "" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [],
-    name: 'prizePool',
-    outputs: [{ type: 'uint256', name: '' }],
-    stateMutability: 'view',
-    type: 'function',
+    name: "prizePool",
+    outputs: [{ type: "uint256", name: "" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    inputs: [{ type: 'string', name: '_message' }],
-    name: 'submitQuery',
+    inputs: [{ type: "string", name: "_message" }],
+    name: "submitQuery",
     outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
+    stateMutability: "payable",
+    type: "function",
   },
 ] as const;
 
-// Previous simple ABI definition for reference:
-/*
-const FREYSA_ABI = [
-  'function getCurrentQueryFee() view returns (uint256)',
-  'function prizePool() view returns (uint256)',
-  'function submitQuery(string) payable',
-]
-
 export default function Home() {
-  const [message, setMessage] = useState('')
-  const { address, isConnected } = useAccount()
+  const [message, setMessage] = useState("");
+  const { address, isConnected } = useAccount();
   const { connect } = useConnect({
     connector: new InjectedConnector(),
-  })
+  });
 
   const { data: currentFee } = useContractRead({
     address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
-    functionName: 'getCurrentQueryFee',
+    functionName: "getCurrentQueryFee",
     watch: true,
-  })
+  });
 
   const { data: prizePool } = useContractRead({
     address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
-    functionName: 'prizePool',
+    functionName: "prizePool",
     watch: true,
-  })
+  });
 
   const { write: submitQuery } = useContractWrite({
     address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
-    functionName: 'submitQuery',
-  })
+    functionName: "submitQuery",
+  });
 
   const handleSubmit = () => {
-    if (!currentFee || !message) return
+    if (!currentFee || !message) return;
     submitQuery({
       args: [message],
       value: currentFee,
-    })
-  }
+    });
+  };
 
   if (!isConnected) {
     return (
@@ -85,29 +82,33 @@ export default function Home() {
           Connect Wallet
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto space-y-8">
-        <h1 className="text-4xl font-bold text-center mb-8">Freysa Interface</h1>
-        
+        <h1 className="text-4xl font-bold text-center mb-8">
+          Freysa Interface
+        </h1>
+
         <NetworkInfo />
-        
+
         <div className="card">
           <h2 className="text-2xl font-bold mb-6">Current Stats</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Current Fee</p>
               <p className="text-xl font-medium">
-                {currentFee ? parseFloat(currentFee.toString()) / 1e18 : '...'} ETH
+                {currentFee ? parseFloat(currentFee.toString()) / 1e18 : "..."}{" "}
+                ETH
               </p>
             </div>
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
               <p className="text-xl font-medium">
-                {prizePool ? parseFloat(prizePool.toString()) / 1e18 : '...'} ETH
+                {prizePool ? parseFloat(prizePool.toString()) / 1e18 : "..."}{" "}
+                ETH
               </p>
             </div>
           </div>
@@ -122,14 +123,11 @@ export default function Home() {
             rows={4}
             placeholder="Enter your message to convince Freysa..."
           />
-          <button
-            onClick={handleSubmit}
-            className="btn-primary w-full"
-          >
+          <button onClick={handleSubmit} className="btn-primary w-full">
             Submit Query
           </button>
         </div>
       </div>
     </main>
-  )
+  );
 }

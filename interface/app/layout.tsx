@@ -1,31 +1,54 @@
-'use client'
+"use client";
 
-import './globals.css'
-import { WagmiConfig, createConfig, configureChains } from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
-import { base } from 'wagmi/chains'
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+import { publicProvider } from "wagmi/providers/public";
+
+import "./globals.css";
+
+const moai = {
+  id: 42069,
+  name: "mo.ai",
+  rpcUrls: {
+    public: { http: ["https://rpc.moai.cash"] },
+    default: { http: ["https://rpc.moai.cash"] },
+  },
+  network: "moai",
+  nativeCurrency: {
+    name: "ETH",
+    symbol: "ETH",
+    decimals: 18,
+  },
+};
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [base],
-  [publicProvider()]
-)
+  [moai],
+  [
+    publicProvider(),
+    jsonRpcProvider({
+      rpc: () => ({
+        http: "https://rpc.moai.cash",
+      }),
+    }),
+  ]
+);
 
 const config = createConfig({
   autoConnect: true,
   publicClient,
   webSocketPublicClient,
-})
+});
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <WagmiConfig config={config}>
-        <body>{children}</body>
-      </WagmiConfig>
+      <body>
+        <WagmiConfig config={config}>{children}</WagmiConfig>
+      </body>
     </html>
-  )
+  );
 }
