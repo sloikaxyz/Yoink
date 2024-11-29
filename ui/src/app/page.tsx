@@ -67,19 +67,6 @@ export default function Home() {
     },
   });
 
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <button
-          onClick={() => connect({ connector: connectors[0] })}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Connect Wallet
-        </button>
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-gray-900 to-gray-800">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -90,7 +77,16 @@ export default function Home() {
             </h1>
             <p className="text-gray-400 mt-2">Challenge the AI, Win the Pool</p>
           </header>
-          <NetworkInfo />
+          {isConnected ? (
+            <NetworkInfo />
+          ) : (
+            <button
+              onClick={() => connect({ connector: connectors[0] })}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-all"
+            >
+              Connect Wallet
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -124,14 +120,23 @@ export default function Home() {
                 onChange={(e) => setMessage(e.target.value)}
                 className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 rows={4}
-                placeholder="Enter your message to convince Freysa..."
+                placeholder={
+                  isConnected
+                    ? "Enter your message to convince Freysa..."
+                    : "Connect your wallet to submit a query..."
+                }
+                disabled={!isConnected}
               />
               <button
                 onClick={() => handleSubmit()}
-                disabled={!submitQuery || isPending || isWaitingForTx}
+                disabled={
+                  !isConnected || !submitQuery || isPending || isWaitingForTx
+                }
                 className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {isPending || isWaitingForTx ? (
+                {!isConnected ? (
+                  "Connect Wallet to Submit"
+                ) : isPending || isWaitingForTx ? (
                   <span className="flex items-center justify-center">
                     <svg
                       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
