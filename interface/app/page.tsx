@@ -67,24 +67,36 @@ export default function Home() {
         
         <NetworkInfo />
         
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl mb-4">Current Stats</h2>
-          <p>Current Fee: {currentFee ? (Number(currentFee) / 1e18).toFixed(6) : '...'} ETH</p>
-          <p>Prize Pool: {prizePool ? (Number(prizePool) / 1e18).toFixed(6) : '...'} ETH</p>
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Current Stats</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-gray-700/30 rounded-lg">
+              <p className="text-gray-400 text-sm mb-1">Current Fee</p>
+              <p className="text-xl font-medium">
+                {currentFee ? (Number(currentFee) / 1e18).toFixed(6) : '...'} ETH
+              </p>
+            </div>
+            <div className="p-4 bg-gray-700/30 rounded-lg">
+              <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
+              <p className="text-xl font-medium">
+                {prizePool ? (Number(prizePool) / 1e18).toFixed(6) : '...'} ETH
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl mb-4">Submit Query</h2>
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Submit Query</h2>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+            className="input-primary mb-4"
             rows={4}
-            placeholder="Enter your message..."
+            placeholder="Enter your message to convince Freysa..."
           />
           <button
             onClick={handleSubmit}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="btn-primary w-full"
           >
             Submit Query
           </button>

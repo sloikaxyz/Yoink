@@ -10,7 +10,7 @@ const NETWORK_CONFIG = {
     symbol: 'ETH',
     decimals: 18
   },
-  rpcUrls: ['http://rpc.ai.caffeinum.com:8545'],
+  rpcUrls: ['https://rpc.moai.cash'],
   blockExplorerUrls: ['']
 }
 
