@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   useAccount,
   useBalance,
   useSendTransaction,
   useSwitchChain,
-  useWaitForTransactionReceipt,
 } from "wagmi";
 
+import { useMutation } from "@tanstack/react-query";
 import { formatUnits, parseEther } from "viem";
 import { sepolia } from "wagmi/chains";
 import { moai } from "../moai";
@@ -17,19 +17,12 @@ const BRIDGE_ADDRESS = "0x8FFa37c4493e9621fdCC4a0E6959d5c8f1B2F0c2";
 
 export function NetworkInfo() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isBridging, setIsBridging] = useState(false);
-  const [bridgeTxHash, setBridgeTxHash] = useState<string>();
-  const [bridgeError, setBridgeError] = useState<string>();
+
   const [bridgeStatus, setBridgeStatus] = useState<string>();
 
-  const { switchChain, error: switchError } = useSwitchChain({});
+  const { switchChainAsync, error: switchError } = useSwitchChain({});
 
-  const { sendTransactionAsync } = useSendTransaction();
-
-  const { isSuccess: isBridgeComplete } = useWaitForTransactionReceipt({
-    chainId: sepolia.id,
-    hash: bridgeTxHash as `0x${string}`,
-  });
+  const { sendTransactionAsync } = useSendTransaction({});
 
   const { address } = useAccount();
   const { data: moaiBalance } = useBalance({
@@ -39,56 +32,49 @@ export function NetworkInfo() {
 
   const { chain } = useAccount();
 
-  useEffect(() => {
-    if (isBridgeComplete && chain?.id === sepolia.id) {
-      setBridgeStatus("Bridge complete! Switching back to Moai...");
-      switchChain?.({ chainId: moai.id });
-      setTimeout(() => {
-        setIsBridging(false);
-        setBridgeTxHash(undefined);
-        setBridgeStatus(undefined);
-        setBridgeError(undefined);
-      }, 2000);
-    }
-  }, [isBridgeComplete, chain?.id, switchChain]);
-
   const addNetwork = useCallback(async () => {
-    if (switchChain) {
-      switchChain({ chainId: moai.id });
+    if (switchChainAsync) {
+      switchChainAsync({ chainId: moai.id });
     }
-  }, [switchChain]);
+  }, [switchChainAsync]);
 
-  const handleBridge = async () => {
-    setBridgeError(undefined);
+  const {
+    data: bridgeTxHash,
+    isPending: isBridging,
+    error: bridgeError,
+    mutate: handleBridge,
+  } = useMutation({
+    mutationFn: async () => {
+      try {
+        if (chain?.id !== sepolia.id) {
+          setBridgeStatus("Switching to Sepolia...");
 
-    try {
-      if (chain?.id !== sepolia.id) {
-        setIsBridging(true);
-        setBridgeStatus("Switching to Sepolia...");
+          // First switch to Sepolia
+          await switchChainAsync?.({ chainId: sepolia.id });
+        }
 
-        // First switch to Sepolia
-        switchChain?.({ chainId: sepolia.id });
+        setBridgeStatus("Initiating bridge transaction...");
+
+        // Send the bridge transaction
+
+        const txHash = await sendTransactionAsync?.({
+          to: BRIDGE_ADDRESS,
+          value: parseEther("0.1"),
+        });
+
+        setBridgeStatus(
+          "Bridge complete! Please wait a few seconds for funds to arrive"
+        );
+
+        await switchChainAsync?.({ chainId: moai.id });
+
+        return txHash;
+      } catch (error) {
+        console.error("Bridge error:", error);
+        throw error;
       }
-
-      setBridgeStatus("Initiating bridge transaction...");
-
-      // Send the bridge transaction
-
-      const txHash = await sendTransactionAsync?.({
-        to: BRIDGE_ADDRESS,
-        value: parseEther("0.1"),
-      });
-
-      setBridgeTxHash(txHash);
-      switchChain?.({ chainId: moai.id });
-    } catch (error) {
-      console.error("Bridge error:", error);
-      setBridgeError(error instanceof Error ? error.message : "Bridge failed");
-      setIsBridging(false);
-      setBridgeTxHash(undefined);
-      setBridgeStatus(undefined);
-    }
-  };
+    },
+  });
 
   return (
     <div className="relative">
@@ -195,7 +181,7 @@ export function NetworkInfo() {
                 </div>
 
                 <button
-                  onClick={handleBridge}
+                  onClick={() => handleBridge()}
                   disabled={isBridging}
                   className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 
                            disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
@@ -221,7 +207,7 @@ export function NetworkInfo() {
 
                 {bridgeError && (
                   <div className="text-sm text-red-400 text-center">
-                    Error: {bridgeError}
+                    Error: {bridgeError.message}
                   </div>
                 )}
               </div>

@@ -63,8 +63,6 @@ export default function Home() {
     onLogs(logs) {
       console.log("New logs!", logs);
 
-      alert(logs[0].args.response);
-
       setResponse(logs[0].args.response);
     },
   });
