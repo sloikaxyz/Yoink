@@ -9,6 +9,32 @@ import { NetworkInfo } from './components/NetworkInfo'
 const FREYSA_ADDRESS = '0x750C3f90549774b4a0367cF9D583187b44D1C775'
 
 const FREYSA_ABI = [
+  {
+    inputs: [],
+    name: 'getCurrentQueryFee',
+    outputs: [{ type: 'uint256', name: '' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'prizePool',
+    outputs: [{ type: 'uint256', name: '' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ type: 'string', name: '_message' }],
+    name: 'submitQuery',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+] as const;
+
+// Previous simple ABI definition for reference:
+/*
+const FREYSA_ABI = [
   'function getCurrentQueryFee() view returns (uint256)',
   'function prizePool() view returns (uint256)',
   'function submitQuery(string) payable',
@@ -22,25 +48,27 @@ export default function Home() {
   })
 
   const { data: currentFee } = useContractRead({
-    address: FREYSA_ADDRESS,
+    address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
     functionName: 'getCurrentQueryFee',
+    watch: true,
   })
 
   const { data: prizePool } = useContractRead({
-    address: FREYSA_ADDRESS,
+    address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
     functionName: 'prizePool',
+    watch: true,
   })
 
   const { write: submitQuery } = useContractWrite({
-    address: FREYSA_ADDRESS,
+    address: FREYSA_ADDRESS as `0x${string}`,
     abi: FREYSA_ABI,
     functionName: 'submitQuery',
   })
 
   const handleSubmit = () => {
-    if (!currentFee) return
+    if (!currentFee || !message) return
     submitQuery({
       args: [message],
       value: currentFee,
@@ -73,13 +101,13 @@ export default function Home() {
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Current Fee</p>
               <p className="text-xl font-medium">
-                {currentFee ? (Number(currentFee) / 1e18).toFixed(6) : '...'} ETH
+                {currentFee ? parseFloat(currentFee.toString()) / 1e18 : '...'} ETH
               </p>
             </div>
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
               <p className="text-xl font-medium">
-                {prizePool ? (Number(prizePool) / 1e18).toFixed(6) : '...'} ETH
+                {prizePool ? parseFloat(prizePool.toString()) / 1e18 : '...'} ETH
               </p>
             </div>
           </div>
