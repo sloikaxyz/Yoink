@@ -1,14 +1,27 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { useAccount, useConnect } from "wagmi";
-
+import { formatUnits } from "viem";
+import {
+  useAccount,
+  useConnect,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent,
+  useWriteContract,
+} from "wagmi";
 import { NetworkInfo } from "./components/NetworkInfo";
 import {
+  freysaAbi,
+  freysaAddress,
   useReadFreysaGetCurrentQueryFee,
   useReadFreysaPrizePool,
-  useWriteFreysaSubmitQuery,
+  useSimulateFreysaSubmitQuery,
 } from "./generated";
+
+const decodeString = (str: `0x${string}`) => {
+  return Buffer.from(str.slice(2), "hex").toString("utf-8");
+};
 
 export default function Home() {
   const [message, setMessage] = useState("");
@@ -17,16 +30,44 @@ export default function Home() {
 
   const { data: currentFee } = useReadFreysaGetCurrentQueryFee();
   const { data: prizePool } = useReadFreysaPrizePool();
-  const { data: response, writeContract: submitQuery } =
-    useWriteFreysaSubmitQuery();
+  const { data: response, writeContractAsync } = useWriteContract();
 
-  const handleSubmit = () => {
-    if (!currentFee || !message) return;
-    submitQuery({
-      args: [message],
-      value: currentFee,
-    });
-  };
+  const { data: submitQuery } = useSimulateFreysaSubmitQuery({
+    args: [message],
+    value: currentFee,
+  });
+
+  const {
+    isPending,
+    mutate: handleSubmit,
+    data: tx,
+  } = useMutation({
+    mutationKey: ["submitQuery", message],
+    mutationFn: async () => {
+      console.log("Submitting query", message, submitQuery);
+
+      if (!submitQuery) return;
+
+      const tx = await writeContractAsync(submitQuery.request);
+      console.log("Transaction sent", tx);
+      return tx;
+    },
+  });
+
+  const { isLoading: isWaitingForTx } = useWaitForTransactionReceipt({
+    hash: tx,
+  });
+
+  useWatchContractEvent({
+    address: freysaAddress[42069],
+    abi: freysaAbi,
+    eventName: "SystemResponse",
+    onLogs(logs) {
+      console.log("New logs!", logs);
+
+      alert(logs[0].args.response);
+    },
+  });
 
   if (!isConnected) {
     return (
@@ -56,15 +97,13 @@ export default function Home() {
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Current Fee</p>
               <p className="text-xl font-medium">
-                {currentFee ? parseFloat(currentFee.toString()) / 1e18 : "..."}{" "}
-                ETH
+                {currentFee ? formatUnits(currentFee, 18) : "..."} ETH
               </p>
             </div>
             <div className="p-4 bg-gray-700/30 rounded-lg">
               <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
               <p className="text-xl font-medium">
-                {prizePool ? parseFloat(prizePool.toString()) / 1e18 : "..."}{" "}
-                ETH
+                {prizePool ? formatUnits(prizePool, 18) : "..."} ETH
               </p>
             </div>
           </div>
@@ -79,10 +118,21 @@ export default function Home() {
             rows={4}
             placeholder="Enter your message to convince Freysa..."
           />
-          <button onClick={handleSubmit} className="btn-primary w-full">
-            Submit Query
+          <button
+            onClick={() => handleSubmit()}
+            disabled={!submitQuery || isPending || isWaitingForTx}
+            className="btn-primary w-full"
+          >
+            {isPending || isWaitingForTx ? "Submitting..." : "Submit Query"}
           </button>
         </div>
+
+        {response && (
+          <div className="card">
+            <h2 className="text-2xl font-bold mb-6">Response</h2>
+            <p>{decodeString(response)}</p>
+          </div>
+        )}
       </div>
     </main>
   );

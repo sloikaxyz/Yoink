@@ -11,7 +11,7 @@ export default defineConfig({
 
       deployments: {
         Freysa: {
-          42069: "0x7084E3E57aaC6093AF44d02490D0dfba9503Ce4E",
+          42069: "0xBc92119F97a2049B6d7ff22e6EC32F92dbCFfa6D",
         },
       },
     }),

@@ -4,14 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import {
   useAccount,
   useBalance,
-  useBlockNumber,
   useSendTransaction,
   useSwitchChain,
   useWaitForTransactionReceipt,
 } from "wagmi";
 
+import { formatUnits, parseEther } from "viem";
 import { sepolia } from "wagmi/chains";
-import { useReadFreysaGetCurrentQueryFee } from "../generated";
 import { moai } from "../moai";
 
 const BRIDGE_ADDRESS = "0x8FFa37c4493e9621fdCC4a0E6959d5c8f1B2F0c2";
@@ -24,18 +23,11 @@ export function NetworkInfo() {
 
   const { switchChain, error: switchError } = useSwitchChain({});
 
-  const { sendTransactionAsync: sendBridgeTx } = useSendTransaction();
+  const { sendTransactionAsync } = useSendTransaction();
 
   const { isSuccess: isBridgeComplete } = useWaitForTransactionReceipt({
     chainId: sepolia.id,
     hash: bridgeTxHash as `0x${string}`,
-  });
-
-  const block = useBlockNumber({
-    chainId: sepolia.id,
-  });
-  const { data: currentFee } = useReadFreysaGetCurrentQueryFee({
-    blockNumber: block.data,
   });
 
   const { address } = useAccount();
@@ -69,28 +61,24 @@ export function NetworkInfo() {
     setBridgeError(undefined);
 
     try {
-      if (chain?.id !== moai.id) {
+      if (chain?.id !== sepolia.id) {
         setIsBridging(true);
         setBridgeStatus("Switching to Sepolia...");
 
         // First switch to Sepolia
-        await switchChain?.({ chainId: sepolia.id });
-        setBridgeStatus("Initiating bridge transaction...");
-
-        // Send the bridge transaction
-        if (sendBridgeTx && currentFee) {
-          const txHash = await sendBridgeTx({
-            to: BRIDGE_ADDRESS,
-            value: currentFee,
-          });
-          setBridgeTxHash(txHash);
-          setBridgeStatus("Waiting for bridge confirmation...");
-        } else {
-          throw new Error("Failed to prepare bridge transaction");
-        }
-
-        return;
+        switchChain?.({ chainId: sepolia.id });
       }
+
+      setBridgeStatus("Initiating bridge transaction...");
+
+      // Send the bridge transaction
+
+      const txHash = await sendTransactionAsync?.({
+        to: BRIDGE_ADDRESS,
+        value: parseEther("0.1"),
+      });
+      setBridgeTxHash(txHash);
+      setBridgeStatus("Waiting for bridge confirmation...");
     } catch (error) {
       console.error("Bridge error:", error);
       setBridgeError(error instanceof Error ? error.message : "Bridge failed");
@@ -118,7 +106,7 @@ export function NetworkInfo() {
             <span className="text-gray-400">Balance</span>
             <span className="font-mono">
               {moaiBalance
-                ? `${parseFloat(moaiBalance.formatted).toFixed(4)} ${moaiBalance.symbol}`
+                ? `${formatUnits(moaiBalance.value, moaiBalance.decimals)} ${moaiBalance.symbol}`
                 : "..."}
             </span>
           </div>
