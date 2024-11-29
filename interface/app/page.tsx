@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useContractRead, useContractWrite, useAccount, useConnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { parseEther } from 'viem'
+import { NetworkInfo } from './components/NetworkInfo'
 
 const FREYSA_ADDRESS = '0x750C3f90549774b4a0367cF9D583187b44D1C775'
 
@@ -63,6 +64,8 @@ export default function Home() {
     <main className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <h1 className="text-4xl font-bold text-center mb-8">Freysa Interface</h1>
+        
+        <NetworkInfo />
         
         <div className="bg-gray-800 p-6 rounded-lg">
           <h2 className="text-xl mb-4">Current Stats</h2>
