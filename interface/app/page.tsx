@@ -10,32 +10,7 @@ import {
 import { InjectedConnector } from "wagmi/connectors/injected";
 
 import { NetworkInfo } from "./components/NetworkInfo";
-
-const FREYSA_ADDRESS = "0x750C3f90549774b4a0367cF9D583187b44D1C775";
-
-const FREYSA_ABI = [
-  {
-    inputs: [],
-    name: "getCurrentQueryFee",
-    outputs: [{ type: "uint256", name: "" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "prizePool",
-    outputs: [{ type: "uint256", name: "" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ type: "string", name: "_message" }],
-    name: "submitQuery",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
-  },
-] as const;
+import { FREYSA_ADDRESS, FREYSA_ABI } from "./FREYSA_ADDRESS";
 
 export default function Home() {
   const [message, setMessage] = useState("");
