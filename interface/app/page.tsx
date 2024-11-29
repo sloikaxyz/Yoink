@@ -1,43 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import {
-  useAccount,
-  useConnect,
-  useContractRead,
-  useContractWrite,
-} from "wagmi";
-import { InjectedConnector } from "wagmi/connectors/injected";
+import { useAccount, useConnect } from "wagmi";
 
 import { NetworkInfo } from "./components/NetworkInfo";
-import { FREYSA_ADDRESS, FREYSA_ABI } from "./FREYSA_ADDRESS";
+import {
+  useReadFreysaGetCurrentQueryFee,
+  useReadFreysaPrizePool,
+  useWriteFreysaSubmitQuery,
+} from "./generated";
 
 export default function Home() {
   const [message, setMessage] = useState("");
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect({
-    connector: new InjectedConnector(),
-  });
+  const { connectors, connect } = useConnect();
 
-  const { data: currentFee } = useContractRead({
-    address: FREYSA_ADDRESS as `0x${string}`,
-    abi: FREYSA_ABI,
-    functionName: "getCurrentQueryFee",
-    watch: true,
-  });
-
-  const { data: prizePool } = useContractRead({
-    address: FREYSA_ADDRESS as `0x${string}`,
-    abi: FREYSA_ABI,
-    functionName: "prizePool",
-    watch: true,
-  });
-
-  const { write: submitQuery } = useContractWrite({
-    address: FREYSA_ADDRESS as `0x${string}`,
-    abi: FREYSA_ABI,
-    functionName: "submitQuery",
-  });
+  const { data: currentFee } = useReadFreysaGetCurrentQueryFee();
+  const { data: prizePool } = useReadFreysaPrizePool();
+  const { data: response, writeContract: submitQuery } =
+    useWriteFreysaSubmitQuery();
 
   const handleSubmit = () => {
     if (!currentFee || !message) return;
@@ -51,7 +32,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <button
-          onClick={() => connect()}
+          onClick={() => connect({ connector: connectors[0] })}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Connect Wallet

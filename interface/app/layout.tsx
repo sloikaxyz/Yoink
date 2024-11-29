@@ -1,43 +1,23 @@
 "use client";
 
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
-import { publicProvider } from "wagmi/providers/public";
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { sepolia } from "viem/chains";
+import { createConfig, http, WagmiProvider } from "wagmi";
+import { injected } from "wagmi/connectors";
 import "./globals.css";
 
-const moai = {
-  id: 42069,
-  name: "mo.ai",
-  rpcUrls: {
-    public: { http: ["https://rpc.moai.cash"] },
-    default: { http: ["https://rpc.moai.cash"] },
-  },
-  network: "moai",
-  nativeCurrency: {
-    name: "ETH",
-    symbol: "ETH",
-    decimals: 18,
-  },
-};
-
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [moai],
-  [
-    publicProvider(),
-    jsonRpcProvider({
-      rpc: () => ({
-        http: "https://rpc.moai.cash",
-      }),
-    }),
-  ]
-);
+import { moai } from "./moai";
 
 const config = createConfig({
-  autoConnect: true,
-  publicClient,
-  webSocketPublicClient,
+  chains: [sepolia, moai],
+  transports: {
+    [sepolia.id]: http("https://rpc.sepolia.org"),
+    [moai.id]: http("https://rpc.moai.cash"),
+  },
+  connectors: [injected()],
 });
+
+const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -47,7 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <WagmiConfig config={config}>{children}</WagmiConfig>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            {children}s
+          </QueryClientProvider>
+        </WagmiProvider>
       </body>
     </html>
   );
