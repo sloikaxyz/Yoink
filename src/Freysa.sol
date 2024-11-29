@@ -110,9 +110,6 @@ contract Freysa is Ownable {
         }
 
         // Get the last line
-
-
-
         bytes memory lastLine = new bytes(responseBytes.length - lastLineStart);
         for (uint256 i = lastLineStart; i < responseBytes.length; i++) {
             lastLine[i - lastLineStart] = responseBytes[i];
@@ -143,7 +140,7 @@ contract Freysa is Ownable {
             if (isFalse) return false;
         }
 
-        revert("Invalid response");
+        return false;
     }
 
     function endGame() external {
