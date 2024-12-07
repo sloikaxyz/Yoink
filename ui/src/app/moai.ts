@@ -1,7 +1,7 @@
 import { Chain } from "viem";
 
 export const moai: Chain = {
-  id: 42069,
+  id: 80418041,
   name: "mo.ai",
   rpcUrls: {
     public: { http: ["https://rpc.moai.cash"] },

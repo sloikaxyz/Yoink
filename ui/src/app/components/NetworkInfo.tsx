@@ -13,7 +13,7 @@ import { formatUnits, parseEther } from "viem";
 import { sepolia } from "wagmi/chains";
 import { moai } from "../moai";
 
-const BRIDGE_ADDRESS = "0x8FFa37c4493e9621fdCC4a0E6959d5c8f1B2F0c2";
+const BRIDGE_ADDRESS = "0xb690d6f15bef62f8304c7729f2794ef0dcc7aa4d";
 
 export function NetworkInfo() {
   const [isOpen, setIsOpen] = useState(false);

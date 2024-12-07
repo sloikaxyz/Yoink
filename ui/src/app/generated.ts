@@ -754,13 +754,232 @@ export const freysaAbi = [
  *
  */
 export const freysaAddress = {
-  42069: '0xBc92119F97a2049B6d7ff22e6EC32F92dbCFfa6D',
+  80418041: '0x7B3e3758a35CE827B63c04416DDDbf804543835f',
 } as const
 
 /**
  *
  */
 export const freysaConfig = { address: freysaAddress, abi: freysaAbi } as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gekkon
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const gekkonAbi = [
+  { type: 'constructor', inputs: [], stateMutability: 'payable' },
+  { type: 'receive', stateMutability: 'payable' },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'AI_SYSTEM',
+    outputs: [{ name: '', internalType: 'contract IAI', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'BASE_QUERY_FEE',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'FEE_DENOMINATOR',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'FEE_INCREASE_RATE',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'MAX_QUERY_FEE',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'SYSTEM_PROMPT',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'endGame',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getCurrentQueryFee',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'lastQuerier',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'lastQueryTimestamp',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'prizePool',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'queryCount',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'message', internalType: 'string', type: 'string' }],
+    name: 'submitQuery',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'userQueryCount',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'totalPrizePool',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'GameEnded',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'winner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'GameWon',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'message',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      { name: 'fee', internalType: 'uint256', type: 'uint256', indexed: false },
+    ],
+    name: 'QuerySubmitted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'response',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+    ],
+    name: 'SystemResponse',
+  },
+  { type: 'error', inputs: [], name: 'InsufficientQueryFee' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  { type: 'error', inputs: [], name: 'TransferFailed' },
+] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IAI
@@ -2626,6 +2845,252 @@ export const useWatchFreysaSystemResponseEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
     abi: freysaAbi,
     address: freysaAddress,
+    eventName: 'SystemResponse',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__
+ */
+export const useReadGekkon = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"AI_SYSTEM"`
+ */
+export const useReadGekkonAiSystem = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'AI_SYSTEM',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"BASE_QUERY_FEE"`
+ */
+export const useReadGekkonBaseQueryFee = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'BASE_QUERY_FEE',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"FEE_DENOMINATOR"`
+ */
+export const useReadGekkonFeeDenominator = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'FEE_DENOMINATOR',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"FEE_INCREASE_RATE"`
+ */
+export const useReadGekkonFeeIncreaseRate = /*#__PURE__*/ createUseReadContract(
+  { abi: gekkonAbi, functionName: 'FEE_INCREASE_RATE' },
+)
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"MAX_QUERY_FEE"`
+ */
+export const useReadGekkonMaxQueryFee = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'MAX_QUERY_FEE',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"SYSTEM_PROMPT"`
+ */
+export const useReadGekkonSystemPrompt = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'SYSTEM_PROMPT',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"getCurrentQueryFee"`
+ */
+export const useReadGekkonGetCurrentQueryFee =
+  /*#__PURE__*/ createUseReadContract({
+    abi: gekkonAbi,
+    functionName: 'getCurrentQueryFee',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"lastQuerier"`
+ */
+export const useReadGekkonLastQuerier = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'lastQuerier',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"lastQueryTimestamp"`
+ */
+export const useReadGekkonLastQueryTimestamp =
+  /*#__PURE__*/ createUseReadContract({
+    abi: gekkonAbi,
+    functionName: 'lastQueryTimestamp',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"owner"`
+ */
+export const useReadGekkonOwner = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"prizePool"`
+ */
+export const useReadGekkonPrizePool = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'prizePool',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"queryCount"`
+ */
+export const useReadGekkonQueryCount = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'queryCount',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"userQueryCount"`
+ */
+export const useReadGekkonUserQueryCount = /*#__PURE__*/ createUseReadContract({
+  abi: gekkonAbi,
+  functionName: 'userQueryCount',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link gekkonAbi}__
+ */
+export const useWriteGekkon = /*#__PURE__*/ createUseWriteContract({
+  abi: gekkonAbi,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"endGame"`
+ */
+export const useWriteGekkonEndGame = /*#__PURE__*/ createUseWriteContract({
+  abi: gekkonAbi,
+  functionName: 'endGame',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useWriteGekkonRenounceOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: gekkonAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"submitQuery"`
+ */
+export const useWriteGekkonSubmitQuery = /*#__PURE__*/ createUseWriteContract({
+  abi: gekkonAbi,
+  functionName: 'submitQuery',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useWriteGekkonTransferOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: gekkonAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link gekkonAbi}__
+ */
+export const useSimulateGekkon = /*#__PURE__*/ createUseSimulateContract({
+  abi: gekkonAbi,
+})
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"endGame"`
+ */
+export const useSimulateGekkonEndGame = /*#__PURE__*/ createUseSimulateContract(
+  { abi: gekkonAbi, functionName: 'endGame' },
+)
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useSimulateGekkonRenounceOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: gekkonAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"submitQuery"`
+ */
+export const useSimulateGekkonSubmitQuery =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: gekkonAbi,
+    functionName: 'submitQuery',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link gekkonAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useSimulateGekkonTransferOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: gekkonAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__
+ */
+export const useWatchGekkonEvent = /*#__PURE__*/ createUseWatchContractEvent({
+  abi: gekkonAbi,
+})
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__ and `eventName` set to `"GameEnded"`
+ */
+export const useWatchGekkonGameEndedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: gekkonAbi,
+    eventName: 'GameEnded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__ and `eventName` set to `"GameWon"`
+ */
+export const useWatchGekkonGameWonEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: gekkonAbi,
+    eventName: 'GameWon',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const useWatchGekkonOwnershipTransferredEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: gekkonAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__ and `eventName` set to `"QuerySubmitted"`
+ */
+export const useWatchGekkonQuerySubmittedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: gekkonAbi,
+    eventName: 'QuerySubmitted',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link gekkonAbi}__ and `eventName` set to `"SystemResponse"`
+ */
+export const useWatchGekkonSystemResponseEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: gekkonAbi,
     eventName: 'SystemResponse',
   })
 

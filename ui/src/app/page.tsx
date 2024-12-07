@@ -57,7 +57,7 @@ export default function Home() {
   });
 
   useWatchContractEvent({
-    address: freysaAddress[42069],
+    address: freysaAddress[80418041],
     abi: freysaAbi,
     eventName: "SystemResponse",
     onLogs(logs) {
