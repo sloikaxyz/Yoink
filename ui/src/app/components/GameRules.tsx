@@ -5,7 +5,7 @@ export function GameRules() {
       <div className="space-y-3 text-gray-300">
         <p>
           🎮 <span className="font-semibold">Game Objective:</span> Try to
-          convince Freysa AI to approve sending you money from the prize pool.
+          convince Gekkon AI to approve sending you money from the prize pool.
         </p>
 
         <div className="space-y-2">

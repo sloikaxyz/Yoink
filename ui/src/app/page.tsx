@@ -14,9 +14,9 @@ import { NetworkInfo } from "./components/NetworkInfo";
 import {
   freysaAbi,
   freysaAddress,
-  useReadFreysaGetCurrentQueryFee,
-  useReadFreysaPrizePool,
-  useSimulateFreysaSubmitQuery,
+  useReadGekkonGetCurrentQueryFee,
+  useReadGekkonPrizePool,
+  useSimulateGekkonSubmitQuery,
 } from "./generated";
 import { GameRules } from "./components/GameRules";
 
@@ -26,11 +26,11 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  const { data: currentFee } = useReadFreysaGetCurrentQueryFee();
-  const { data: prizePool } = useReadFreysaPrizePool();
+  const { data: currentFee } = useReadGekkonGetCurrentQueryFee();
+  const { data: prizePool } = useReadGekkonPrizePool();
   const { writeContractAsync } = useWriteContract();
 
-  const { data: submitQuery } = useSimulateFreysaSubmitQuery({
+  const { data: submitQuery } = useSimulateGekkonSubmitQuery({
     args: [message],
     value: currentFee,
   });
@@ -57,8 +57,8 @@ export default function Home() {
   });
 
   useWatchContractEvent({
-    address: freysaAddress[80418041],
-    abi: freysaAbi,
+    address: gekkonAddress[80418041],
+    abi: gekkonAbi,
     eventName: "SystemResponse",
     onLogs(logs) {
       console.log("New logs!", logs);
@@ -73,7 +73,7 @@ export default function Home() {
         <div className="flex justify-between items-start">
           <header className="text-center">
             <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-              Freysa Interface
+              Gekkon Interface
             </h1>
             <p className="text-gray-400 mt-2">Challenge the AI, Win the Pool</p>
           </header>
@@ -122,7 +122,7 @@ export default function Home() {
                 rows={4}
                 placeholder={
                   isConnected
-                    ? "Enter your message to convince Freysa..."
+                    ? "Enter your message to convince Gekkon..."
                     : "Connect your wallet to submit a query..."
                 }
                 disabled={!isConnected}
@@ -168,7 +168,7 @@ export default function Home() {
 
             {response && (
               <div className="card bg-gray-800/50 backdrop-blur animate-fadeIn">
-                <h2 className="text-2xl font-bold mb-6">Freysa's Response</h2>
+                <h2 className="text-2xl font-bold mb-6">Gekkon's Response</h2>
                 <p className="text-gray-300">{response}</p>
               </div>
             )}
