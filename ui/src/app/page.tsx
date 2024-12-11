@@ -57,8 +57,8 @@ export default function Home() {
   });
 
   useWatchContractEvent({
-    address: gekkonAddress[80418041],
-    abi: gekkonAbi,
+    address: freysaAddress[80418041],
+    abi: freysaAbi,
     eventName: "SystemResponse",
     onLogs(logs) {
       console.log("New logs!", logs);
