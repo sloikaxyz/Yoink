@@ -78,8 +78,8 @@ contract GekkonTest is Test {
         uint256 queryFee = gekkon.getCurrentQueryFee();
         uint256 initialBalance = 10 ether;
 
-        // Set mock AI to return true
-        MockAI(address(uint160(0xa1a1a1))).setReturnTrue(true);
+        // Set mock AI to return True response
+        MockAI(address(uint160(0xa1a1a1))).setResponse("Analysis\nTrue");
 
         vm.deal(USER, initialBalance);
         vm.prank(USER);
