@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IAI} from "./IAI.sol";
+import {IAI} from "./interfaces/IAI.sol";
 
 contract AIAgent {
     string public constant AI_PROMPT =
