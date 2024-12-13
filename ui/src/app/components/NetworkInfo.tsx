@@ -136,6 +136,21 @@ export function NetworkInfo() {
               </div>
             </div>
 
+            <div className="space-y-2 mt-4">
+              <a
+                href="/"
+                className="block w-full py-2 px-4 text-center rounded-md hover:bg-gray-700/50 transition-colors"
+              >
+                Home
+              </a>
+              <a
+                href="/memedao"
+                className="block w-full py-2 px-4 text-center rounded-md hover:bg-gray-700/50 transition-colors"
+              >
+                MemeDAO
+              </a>
+            </div>
+
             <button
               onClick={addNetwork}
               className={`mt-4 w-full py-2 px-4 rounded-md transition-colors ${

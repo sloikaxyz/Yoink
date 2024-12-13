@@ -12,8 +12,8 @@ import {
 } from "wagmi";
 import { NetworkInfo } from "./components/NetworkInfo";
 import {
-  freysaAbi,
-  freysaAddress,
+  gekkonAddress,
+  gekkonAbi,
   useReadGekkonGetCurrentQueryFee,
   useReadGekkonPrizePool,
   useSimulateGekkonSubmitQuery,
@@ -57,8 +57,8 @@ export default function Home() {
   });
 
   useWatchContractEvent({
-    address: freysaAddress[80418041],
-    abi: freysaAbi,
+    address: gekkonAddress[80418041],
+    abi: gekkonAbi,
     eventName: "SystemResponse",
     onLogs(logs) {
       console.log("New logs!", logs);
