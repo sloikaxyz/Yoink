@@ -23,8 +23,12 @@ contract MemeDAO is Ownable {
 
     uint256 public constant PITCH_FEE = 0.01 ether;
     uint256 public constant INVESTMENT_AMOUNT = 0.1 ether;
-    
-    event PitchSubmitted(address indexed pitcher, address indexed token, string pitch);
+
+    event PitchSubmitted(
+        address indexed pitcher,
+        address indexed token,
+        string pitch
+    );
     event InvestmentMade(address indexed token, uint256 amount);
     event TokensDistributed(address indexed pitcher, uint256 amount);
 
@@ -57,26 +61,33 @@ contract MemeDAO is Ownable {
 
         if (shouldInvest) {
             // Make investment
-            (bool success, ) = payable(token).call{value: INVESTMENT_AMOUNT}("");
+            (bool success, ) = payable(token).call{value: INVESTMENT_AMOUNT}(
+                ""
+            );
             if (!success) revert TransferFailed();
-            
+
             emit InvestmentMade(token, INVESTMENT_AMOUNT);
 
             // Distribute DAO tokens to pitcher
             uint256 rewardAmount = daoToken.balanceOf(address(this)) / 100; // 1% of DAO tokens
             daoToken.transfer(msg.sender, rewardAmount);
-            
+
             emit TokensDistributed(msg.sender, rewardAmount);
         } else {
             // If not investing, give them some DAO tokens as consolation
-            uint256 consolationAmount = daoToken.balanceOf(address(this)) / 1000; // 0.1% of DAO tokens
+            uint256 consolationAmount = daoToken.balanceOf(address(this)) /
+                1000; // 0.1% of DAO tokens
             daoToken.transfer(msg.sender, consolationAmount);
-            
+
             emit TokensDistributed(msg.sender, consolationAmount);
         }
     }
 
-    function checkInvestmentDecision(string memory response) internal pure returns (bool) {
+    function checkInvestmentDecision(string memory response)
+        internal
+        pure
+        returns (bool)
+    {
         bytes memory responseBytes = bytes(response);
         uint256 lastLineStart = 0;
 
@@ -106,7 +117,11 @@ contract MemeDAO is Ownable {
         return false;
     }
 
-    function addressToString(address _addr) internal pure returns (string memory) {
+    function addressToString(address _addr)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory data = abi.encodePacked(_addr);
         bytes memory alphabet = "0123456789abcdef";
 
