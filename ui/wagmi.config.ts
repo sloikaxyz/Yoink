@@ -10,13 +10,12 @@ export default defineConfig({
       project: "../",
 
       deployments: {
-
         MemeGod: {
-          80418041: "0x308FA9a6d5527c2d93e05B60ff46b401A6dd459f",
+          80418041: "0xF9753cB66F0C5f97dcf6C28C66E8a256D92288a2",
         },
 
         MemeDAO: {
-          80418041: "0x4335f53403B98407B5d9735efcB971c4440C7f2b",
+          80418041: "0x0418F571CBd042C3210bFF7552f0fa843775eB78",
         },
 
         PokemonLeague: {
