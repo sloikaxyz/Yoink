@@ -2402,7 +2402,7 @@ export const memeDaoAbi = [
  *
  */
 export const memeDaoAddress = {
-  80418041: '0x0418F571CBd042C3210bFF7552f0fa843775eB78',
+  80418041: '0x308FA9a6d5527c2d93e05B60ff46b401A6dd459f',
 } as const
 
 /**
