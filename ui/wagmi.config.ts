@@ -11,11 +11,11 @@ export default defineConfig({
 
       deployments: {
         MemeGod: {
-          80418041: "0x7B3e3758a35CE827B63c04416DDDbf804543835f",
+          80418041: "0xAa47E8814317B183be45C58da7cf24f37FAf941C",
         },
 
         MemeDAO: {
-          80418041: "0x308FA9a6d5527c2d93e05B60ff46b401A6dd459f",
+          80418041: "0x2490Cd4412540fE02dE71122d6c596f58e8137e6",
         },
 
         PokemonLeague: {
