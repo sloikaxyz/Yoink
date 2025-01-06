@@ -83,45 +83,70 @@ contract MemeDAO is Ownable {
         }
     }
 
-    function checkInvestmentDecision(string memory response)
-        internal
-        pure
-        returns (bool)
-    {
+    function checkInvestmentDecision(
+        string memory response
+    ) internal pure returns (bool) {
+        // Handle empty response
         bytes memory responseBytes = bytes(response);
-        uint256 lastLineStart = 0;
+        if (responseBytes.length == 0) {
+            return false;
+        }
 
-        // Find the start of the last line
+        // Find start of last non-empty line
+        uint256 lastLineStart = 0;
+        uint256 lastNonEmptyLineStart = 0;
+
         for (uint256 i = 0; i < responseBytes.length; i++) {
             if (responseBytes[i] == "\n") {
+                if (i > lastLineStart && i - lastLineStart > 0) {
+                    // Save position only if line had content
+                    lastNonEmptyLineStart = lastLineStart;
+                }
                 lastLineStart = i + 1;
             }
         }
 
-        // Get the last line
-        bytes memory lastLine = new bytes(responseBytes.length - lastLineStart);
-        for (uint256 i = lastLineStart; i < responseBytes.length; i++) {
-            lastLine[i - lastLineStart] = responseBytes[i];
+        // Check if final line has content
+        if (responseBytes.length > lastLineStart) {
+            lastNonEmptyLineStart = lastLineStart;
         }
 
         bytes memory investBytes = bytes("INVEST");
-        if (lastLine.length == investBytes.length) {
-            for (uint256 i = 0; i < investBytes.length; i++) {
-                if (lastLine[i] != investBytes[i]) {
-                    return false;
-                }
-            }
-            return true;
+        uint256 remainingLength = responseBytes.length - lastNonEmptyLineStart;
+
+        // Early return if remaining length is too short
+        if (remainingLength < investBytes.length) {
+            return false;
         }
 
-        return false;
+        // Check for exact "INVEST" match
+        for (uint256 i = 0; i < investBytes.length; i++) {
+            if (
+                i >= remainingLength ||
+                responseBytes[lastNonEmptyLineStart + i] != investBytes[i]
+            ) {
+                return false;
+            }
+        }
+
+        // If we've matched INVEST, ensure rest of line is empty or whitespace
+        for (
+            uint256 i = lastNonEmptyLineStart + investBytes.length;
+            i < responseBytes.length;
+            i++
+        ) {
+            bytes1 c = responseBytes[i];
+            if (c != " " && c != "\t" && c != "\n" && c != "\r") {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    function addressToString(address _addr)
-        internal
-        pure
-        returns (string memory)
-    {
+    function addressToString(
+        address _addr
+    ) internal pure returns (string memory) {
         bytes memory data = abi.encodePacked(_addr);
         bytes memory alphabet = "0123456789abcdef";
 
